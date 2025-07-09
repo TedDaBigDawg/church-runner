@@ -24,7 +24,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { z } from "zod";
-import { appointmentSchema, SERVICES, TIMESLOTS } from "@/lib/appointment";
 import {
   Form,
   FormField,
@@ -34,6 +33,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { keyframes } from "framer-motion";
+import { appointmentSchema, TIMESLOTS } from "@/lib/validations";
 
 export default function BookAppointmentForm() {
   type AppointmentValues = z.infer<typeof appointmentSchema>;

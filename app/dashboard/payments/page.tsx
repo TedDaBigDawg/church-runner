@@ -1,68 +1,80 @@
-import Link from "next/link"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { requireAuth } from "@/lib/auth"
-import { formatDate, formatCurrency } from "@/lib/utils"
-import { getUserPayments, getActivePaymentGoals } from "@/actions/payment-actions"
-import { PrettyAmount } from "@/components/ui/PrettyAmount"
-import { PaymentHistoryTable } from "@/components/payment-history-table"
+import Link from "next/link";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { requireAuth } from "@/lib/auth";
+import { formatDate, formatCurrency } from "@/lib/utils";
+import {
+  getUserPayments,
+  getActivePaymentGoals,
+} from "@/actions/payment-actions";
+import { PrettyAmount } from "@/components/ui/PrettyAmount";
+import { PaymentHistoryTable } from "@/components/payment-history-table";
 
-export default async function DonationsPage({ searchParams }: { searchParams: { success?: string; error?: string } }) {
-  const user = await requireAuth()
+export default async function DonationsPage({
+  searchParams,
+}: {
+  searchParams: { success?: string; error?: string };
+}) {
+  const user = await requireAuth();
 
-  searchParams = await searchParams
+  searchParams = await searchParams;
   // Fetch all payments for the user
-  const payments = await getUserPayments(user.id)
+  const payments = await getUserPayments(user.id);
 
   // Separate donations and offerings
-  const donations = payments.filter((payment) => payment.type === "DONATION")
-  const offerings = payments.filter((payment) => payment.type === "OFFERING")
+  const donations = payments.filter((payment) => payment.type === "DONATION");
+  const offerings = payments.filter((payment) => payment.type === "OFFERING");
 
   // console.log("Payments:", payments)
   // console.log("Donations:", donations)
   // Calculate totals
   const totalDonations = donations.reduce((sum, payment) => {
-    return payment.status === "PAID" ? sum + payment.amount : sum
-  }, 0)
+    return payment.status === "PAID" ? sum + payment.amount : sum;
+  }, 0);
 
   // console.log("Total donations:", totalDonations)
 
   const totalOfferings = offerings.reduce((sum, payment) => {
-    return payment.status === "PAID" ? sum + payment.amount : sum
-  }, 0)
+    return payment.status === "PAID" ? sum + payment.amount : sum;
+  }, 0);
 
   // Calculate total by category for donations
-  const totalByCategory = donations.reduce(
-    (acc, payment) => {
-      if (payment.status === "PAID" && payment.category) {
-        const category = payment.category
-        if (!acc[category]) {
-          acc[category] = 0
-        }
-        acc[category] += payment.amount
+  const totalByCategory = donations.reduce((acc, payment) => {
+    if (payment.status === "PAID" && payment.category) {
+      const category = payment.category;
+      if (!acc[category]) {
+        acc[category] = 0;
       }
-      return acc
-    },
-    {} as Record<string, number>,
-  )
+      acc[category] += payment.amount;
+    }
+    return acc;
+  }, {} as Record<string, number>);
 
   // console.log("Total by category:", totalByCategory)
   // Fetch donation goals
-  const paymentGoals = await getActivePaymentGoals()
+  const paymentGoals = await getActivePaymentGoals();
 
   return (
-    <div className="bg-gray-50 min-h-screen">
+    <div className="bg-gray-50 text-black min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Donations</h1>
-            <p className="text-gray-600">Manage your donations and offerings to support our church.</p>
+            <p className="text-gray-600">
+              Manage your donations and offerings to support our church.
+            </p>
           </div>
           <div className="flex flex-wrap gap-3 w-full sm:w-auto">
-            <Link href="/dashboard/payments/new?type=DONATION" className="w-full sm:w-auto">
+            <Link
+              href="/dashboard/payments/new?type=DONATION"
+              className="w-full sm:w-auto"
+            >
               <Button className="w-full sm:w-auto">Make Donation</Button>
             </Link>
-            <Link href="/dashboard/payments/new?type=OFFERING" className="w-full sm:w-auto">
+            <Link
+              href="/dashboard/payments/new?type=OFFERING"
+              className="w-full sm:w-auto"
+            >
               <Button variant="outline" className="w-full sm:w-auto">
                 Make Offering
               </Button>
@@ -81,17 +93,19 @@ export default async function DonationsPage({ searchParams }: { searchParams: { 
             {searchParams.error === "payment-failed"
               ? "Payment failed. Please try again."
               : searchParams.error === "verification-failed"
-                ? "Payment verification failed. Please contact support."
-                : "An error occurred with your payment. Please try again."}
+              ? "Payment verification failed. Please contact support."
+              : "An error occurred with your payment. Please try again."}
           </div>
         )}
 
         {paymentGoals.length > 0 && (
           <div className="mb-8">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Current Fundraising Goals</h2>
+            <h2 className="text-xl font-bold text-gray-900 mb-4">
+              Current Fundraising Goals
+            </h2>
             <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
               {paymentGoals.map((goal) => {
-                const progress = (goal.currentAmount / goal.targetAmount) * 100
+                const progress = (goal.currentAmount / goal.targetAmount) * 100;
                 return (
                   <Card key={goal.id}>
                     <CardHeader>
@@ -115,14 +129,16 @@ export default async function DonationsPage({ searchParams }: { searchParams: { 
                           ></div>
                         </div>
                       </div>
-                      <Link href={`/dashboard/payments/new?type=DONATION&category=${goal.category}&goalId=${goal.id}`}>
+                      <Link
+                        href={`/dashboard/payments/new?type=DONATION&category=${goal.category}&goalId=${goal.id}`}
+                      >
                         <Button variant="outline" className="w-full">
                           Donate to this Cause
                         </Button>
                       </Link>
                     </CardContent>
                   </Card>
-                )
+                );
               })}
             </div>
           </div>
@@ -136,36 +152,57 @@ export default async function DonationsPage({ searchParams }: { searchParams: { 
             <CardContent>
               <div className="space-y-6">
                 <div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">Donations</h3>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    Donations
+                  </h3>
                   {Object.keys(totalByCategory).length > 0 ? (
                     <div className="space-y-2">
-                      {Object.entries(totalByCategory).map(([category, total]) => (
-                        <div key={category} className="flex justify-between items-center">
-                          <span className="font-medium">{category.replace("_", " ")}</span>
-                          <span className="font-bold">{formatCurrency(total)}</span>
-                        </div>
-                      ))}
+                      {Object.entries(totalByCategory).map(
+                        ([category, total]) => (
+                          <div
+                            key={category}
+                            className="flex justify-between items-center"
+                          >
+                            <span className="font-medium">
+                              {category.replace("_", " ")}
+                            </span>
+                            <span className="font-bold">
+                              {formatCurrency(total)}
+                            </span>
+                          </div>
+                        )
+                      )}
                       <div className="pt-2 border-t border-gray-200 flex justify-between items-center">
                         <span className="font-medium">Total Donations</span>
-                        <span className="font-bold">{formatCurrency(totalDonations)}</span>
+                        <span className="font-bold">
+                          {formatCurrency(totalDonations)}
+                        </span>
                       </div>
                     </div>
                   ) : (
-                    <p className="text-gray-500">You haven't made any donations yet.</p>
+                    <p className="text-gray-500">
+                      You haven't made any donations yet.
+                    </p>
                   )}
                 </div>
 
                 <div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">Offerings</h3>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    Offerings
+                  </h3>
                   {offerings.length > 0 ? (
                     <div className="space-y-2">
                       <div className="flex justify-between items-center">
                         <span className="font-medium">Total Offerings</span>
-                        <span className="font-bold">{formatCurrency(totalOfferings)}</span>
+                        <span className="font-bold">
+                          {formatCurrency(totalOfferings)}
+                        </span>
                       </div>
                     </div>
                   ) : (
-                    <p className="text-gray-500">You haven't made any offerings yet.</p>
+                    <p className="text-gray-500">
+                      You haven't made any offerings yet.
+                    </p>
                   )}
                 </div>
               </div>
@@ -185,21 +222,32 @@ export default async function DonationsPage({ searchParams }: { searchParams: { 
                         <div>
                           <p className="font-medium">
                             {payment.type === "DONATION"
-                              ? `Donation (${payment.category?.replace("_", " ")})`
+                              ? `Donation (${payment.category?.replace(
+                                  "_",
+                                  " "
+                                )})`
                               : "Offering"}
                           </p>
-                          {payment.description && <p className="text-sm text-gray-500">{payment.description}</p>}
+                          {payment.description && (
+                            <p className="text-sm text-gray-500">
+                              {payment.description}
+                            </p>
+                          )}
                         </div>
                         <div className="text-right">
-                          <p className="font-bold">{formatCurrency(payment.amount)}</p>
-                          <p className="text-sm text-gray-500">{formatDate(payment.createdAt)}</p>
+                          <p className="font-bold">
+                            {formatCurrency(payment.amount)}
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            {formatDate(payment.createdAt)}
+                          </p>
                           <span
                             className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                               payment.status === "PAID"
                                 ? "bg-green-100 text-green-800"
                                 : payment.status === "FAILED"
-                                  ? "bg-red-100 text-red-800"
-                                  : "bg-yellow-100 text-yellow-800"
+                                ? "bg-red-100 text-red-800"
+                                : "bg-yellow-100 text-yellow-800"
                             }`}
                           >
                             {payment.status}
@@ -209,7 +257,11 @@ export default async function DonationsPage({ searchParams }: { searchParams: { 
                       {payment.status === "UNPAID" && (
                         <div className="mt-2">
                           <Link href={`/dashboard/payments/${payment.id}/pay`}>
-                            <Button size="sm" variant="outline" className="w-full">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="w-full"
+                            >
                               Complete Payment
                             </Button>
                           </Link>
@@ -243,7 +295,9 @@ export default async function DonationsPage({ searchParams }: { searchParams: { 
                     type="DONATION"
                   />
                 ) : (
-                  <p className="text-gray-500 text-center py-4">No donation history.</p>
+                  <p className="text-gray-500 text-center py-4">
+                    No donation history.
+                  </p>
                 )}
               </CardContent>
             </Card>
@@ -264,7 +318,9 @@ export default async function DonationsPage({ searchParams }: { searchParams: { 
                     type="OFFERING"
                   />
                 ) : (
-                  <p className="text-gray-500 text-center py-4">No offering history.</p>
+                  <p className="text-gray-500 text-center py-4">
+                    No offering history.
+                  </p>
                 )}
               </CardContent>
             </Card>
@@ -272,6 +328,5 @@ export default async function DonationsPage({ searchParams }: { searchParams: { 
         )}
       </div>
     </div>
-  )
+  );
 }
-

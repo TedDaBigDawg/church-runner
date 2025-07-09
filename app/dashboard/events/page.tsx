@@ -1,11 +1,11 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { requireAuth } from "@/lib/auth"
-import { prisma } from "@/lib/db"
-import { formatDate, formatTime } from "@/lib/utils"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { requireAuth } from "@/lib/auth";
+import { prisma } from "@/lib/db";
+import { formatDate, formatTime } from "@/lib/utils";
 
 export default async function EventsPage() {
-  const user = await requireAuth()
+  const user = await requireAuth();
 
   // Fetch upcoming events
   const events = await prisma.event.findMany({
@@ -16,7 +16,7 @@ export default async function EventsPage() {
         where: { userId: user.id },
       },
     },
-  })
+  });
 
   // Fetch past events the user has RSVP'd to
   const pastEvents = await prisma.event.findMany({
@@ -31,23 +31,27 @@ export default async function EventsPage() {
       },
     },
     take: 5,
-  })
+  });
 
   return (
-    <div className="bg-gray-50 min-h-screen">
+    <div className="bg-gray-50 text-black min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-gray-900">Church Events</h1>
-          <p className="text-gray-600">View and RSVP to upcoming church events.</p>
+          <p className="text-gray-600">
+            View and RSVP to upcoming church events.
+          </p>
         </div>
 
         <div className="mb-12">
-          <h2 className="text-xl font-bold text-gray-900 mb-6">Upcoming Events</h2>
+          <h2 className="text-xl font-bold text-gray-900 mb-6">
+            Upcoming Events
+          </h2>
 
           {events.length > 0 ? (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {events.map((event) => {
-                const hasRsvp = event.rsvps.length > 0
+                const hasRsvp = event.rsvps.length > 0;
                 return (
                   <Card key={event.id} className="h-full flex flex-col">
                     <CardHeader>
@@ -80,8 +84,14 @@ export default async function EventsPage() {
 
                       <div className="mt-6">
                         {hasRsvp ? (
-                          <form action={`/dashboard/events/${event.id}/cancel-rsvp`}>
-                            <Button variant="outline" className="w-full" type="submit">
+                          <form
+                            action={`/dashboard/events/${event.id}/cancel-rsvp`}
+                          >
+                            <Button
+                              variant="outline"
+                              className="w-full"
+                              type="submit"
+                            >
                               Cancel RSVP
                             </Button>
                           </form>
@@ -95,14 +105,18 @@ export default async function EventsPage() {
                       </div>
                     </CardContent>
                   </Card>
-                )
+                );
               })}
             </div>
           ) : (
             <Card>
               <CardContent className="text-center py-8">
-                <p className="text-gray-500 mb-4">No upcoming events at this time.</p>
-                <p className="text-gray-500">Check back later for new events.</p>
+                <p className="text-gray-500 mb-4">
+                  No upcoming events at this time.
+                </p>
+                <p className="text-gray-500">
+                  Check back later for new events.
+                </p>
               </CardContent>
             </Card>
           )}
@@ -110,7 +124,9 @@ export default async function EventsPage() {
 
         {pastEvents.length > 0 && (
           <div>
-            <h2 className="text-xl font-bold text-gray-900 mb-6">Past Events You Attended</h2>
+            <h2 className="text-xl font-bold text-gray-900 mb-6">
+              Past Events You Attended
+            </h2>
 
             <Card>
               <CardContent className="p-0">
@@ -119,11 +135,16 @@ export default async function EventsPage() {
                     <li key={event.id} className="p-6">
                       <div className="flex justify-between items-start">
                         <div>
-                          <h3 className="text-lg font-medium text-gray-900">{event.title}</h3>
-                          <p className="text-gray-600 mt-1">{event.description}</p>
+                          <h3 className="text-lg font-medium text-gray-900">
+                            {event.title}
+                          </h3>
+                          <p className="text-gray-600 mt-1">
+                            {event.description}
+                          </p>
                           <div className="mt-2 text-sm text-gray-500">
                             <p>
-                              {formatDate(event.date)} at {formatTime(event.date)}
+                              {formatDate(event.date)} at{" "}
+                              {formatTime(event.date)}
                             </p>
                             <p>{event.location}</p>
                           </div>
@@ -138,6 +159,5 @@ export default async function EventsPage() {
         )}
       </div>
     </div>
-  )
+  );
 }
-

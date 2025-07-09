@@ -1,93 +1,117 @@
-import type React from "react"
-import Link from "next/link"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { requireAdmin } from "@/lib/auth"
-import { prisma } from "@/lib/db"
-import { formatCurrency, formatDate } from "@/lib/utils"
-import { getAdminActivities } from "@/actions/activity-actions"
-import { Bell, AlertTriangle, Calendar, DollarSign, Users, PlusCircle, Target, FileText, Heart } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
+import type React from "react";
+import Link from "next/link";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { requireAdmin } from "@/lib/auth";
+import { prisma } from "@/lib/db";
+import { formatCurrency, formatDate } from "@/lib/utils";
+import { getAdminActivities } from "@/actions/activity-actions";
+import {
+  Bell,
+  AlertTriangle,
+  Calendar,
+  DollarSign,
+  Users,
+  PlusCircle,
+  Target,
+  FileText,
+  Heart,
+} from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 export default async function AdminDashboardPage() {
-  const user = await requireAdmin()
+  const user = await requireAdmin();
 
   // Fetch counts for various entities
   const pendingMassIntentions = await prisma.massIntention.count({
     where: { status: "PENDING" },
-  })
+  });
 
   const pendingThanksgivings = await prisma.thanksgiving.count({
     where: { status: "PENDING" },
-  })
+  });
 
   const upcomingEvents = await prisma.event.count({
     where: { date: { gte: new Date() } },
-  })
+  });
 
   const upcomingMasses = await prisma.mass.count({
     where: { date: { gte: new Date() } },
-  })
+  });
 
   // Fetch payment statistics
   const totalPayments = await prisma.payment.aggregate({
     where: { status: "PAID" },
     _sum: { amount: true },
-  })
+  });
 
-  const paymentsByType = await prisma.$queryRaw<{ type: string; total: number }[]>`
+  const paymentsByType = await prisma.$queryRaw<
+    { type: string; total: number }[]
+  >`
     SELECT "type", SUM("amount") as total
     FROM "Payment"
     WHERE "status" = 'PAID'
     GROUP BY "type"
     ORDER BY total DESC
-  `
+  `;
 
   // Fetch recent activities
-  const activities = await getAdminActivities(5)
+  const activities = await getAdminActivities(5);
 
   // Fetch recent mass intentions
   const recentMassIntentions = await prisma.massIntention.findMany({
     take: 5,
     orderBy: { createdAt: "desc" },
     include: { user: true },
-  })
+  });
 
   // Fetch recent thanksgivings
   const recentThanksgivings = await prisma.thanksgiving.findMany({
     take: 5,
     orderBy: { createdAt: "desc" },
     include: { user: true },
-  })
+  });
 
   // Fetch recent payments
   const recentPayments = await prisma.payment.findMany({
     take: 5,
     orderBy: { createdAt: "desc" },
     include: { user: true },
-  })
+  });
 
   // Function to check if activity requires action
   const requiresAction = (activity: any) => {
     return (
-      activity.action.includes("New") || activity.action.includes("request") || activity.action.includes("registered")
-    )
-  }
+      activity.action.includes("New") ||
+      activity.action.includes("request") ||
+      activity.action.includes("registered")
+    );
+  };
 
   function formatCompactNumber(value: number): string {
-    if (value >= 1_000_000_000) return `${(value / 1_000_000_000).toFixed(1)}B`
-    if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`
-    if (value >= 1_000) return `${(value / 1_000).toFixed(1)}K`
-    return value.toString()
+    if (value >= 1_000_000_000) return `${(value / 1_000_000_000).toFixed(1)}B`;
+    if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
+    if (value >= 1_000) return `${(value / 1_000).toFixed(1)}K`;
+    return value.toString();
   }
 
   return (
-    <div className="bg-gray-50 min-h-screen">
+    <div className="bg-gray-50 text-black min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
         {/* Dashboard Header */}
         <div className="mb-6 md:mb-8">
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-1">Admin Dashboard</h1>
-          <p className="text-gray-600">Manage church activities and monitor statistics.</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-1">
+            Admin Dashboard
+          </h1>
+          <p className="text-gray-600">
+            Manage church activities and monitor statistics.
+          </p>
         </div>
 
         {/* Stats Overview Cards */}
@@ -134,12 +158,20 @@ export default async function AdminDashboardPage() {
           {/* Recent Activities Card */}
           <Card className="overflow-hidden">
             <CardHeader className="flex flex-row items-center justify-between pb-2 md:pb-4">
-              <div>
-                <CardTitle className="text-lg md:text-xl">Recent Activities</CardTitle>
-                <CardDescription>Latest actions and notifications</CardDescription>
+              <div className=" text-black">
+                <CardTitle className="text-lg md:text-xl">
+                  Recent Activities
+                </CardTitle>
+                <CardDescription>
+                  Latest actions and notifications
+                </CardDescription>
               </div>
               <Link href="/admin/activities">
-                <Button variant="outline" size="sm" className="h-8 px-3 text-xs md:text-sm whitespace-nowrap">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="h-8 px-3 text-xs md:text-sm hover:bg-secondary whitespace-nowrap"
+                >
                   View All
                 </Button>
               </Link>
@@ -150,21 +182,33 @@ export default async function AdminDashboardPage() {
                   {activities.map((activity) => (
                     <li
                       key={activity.id}
-                      className={`py-3 ${requiresAction(activity) ? "bg-amber-50 rounded-md px-3 -mx-3" : ""}`}
+                      className={`py-3 ${
+                        requiresAction(activity)
+                          ? "bg-amber-50 rounded-md px-3 -mx-3"
+                          : ""
+                      }`}
                     >
                       <div className="flex items-start gap-3">
                         <Bell
-                          className={`h-5 w-5 mt-0.5 ${requiresAction(activity) ? "text-amber-500" : "text-blue-500"}`}
+                          className={`h-5 w-5 mt-0.5 ${
+                            requiresAction(activity)
+                              ? "text-amber-500"
+                              : "text-blue-500"
+                          }`}
                         />
                         <div className="flex-1 min-w-0">
                           <p
                             className={`text-sm ${
-                              requiresAction(activity) ? "font-medium text-amber-900" : "text-gray-900"
+                              requiresAction(activity)
+                                ? "font-medium text-amber-900"
+                                : "text-gray-900"
                             }`}
                           >
                             {activity.action}
                           </p>
-                          <p className="text-xs text-gray-500 mt-0.5">{formatDate(activity.createdAt)}</p>
+                          <p className="text-xs text-gray-500 mt-0.5">
+                            {formatDate(activity.createdAt)}
+                          </p>
                         </div>
                         {requiresAction(activity) && (
                           <Badge
@@ -189,8 +233,10 @@ export default async function AdminDashboardPage() {
 
           {/* Quick Actions Card */}
           <Card>
-            <CardHeader className="pb-2 md:pb-4">
-              <CardTitle className="text-lg md:text-xl">Quick Actions</CardTitle>
+            <CardHeader className="pb-2 text-black md:pb-4">
+              <CardTitle className="text-lg md:text-xl">
+                Quick Actions
+              </CardTitle>
               <CardDescription>Common administrative tasks</CardDescription>
             </CardHeader>
             <CardContent>
@@ -254,10 +300,14 @@ export default async function AdminDashboardPage() {
               <li key={intention.id} className="py-3">
                 <div>
                   <p className="font-medium truncate">{intention.name}</p>
-                  <p className="text-sm text-gray-500 line-clamp-1">{intention.intention}</p>
+                  <p className="text-sm text-gray-500 line-clamp-1">
+                    {intention.intention}
+                  </p>
                 </div>
                 <div className="mt-1.5 flex justify-between items-center">
-                  <span className="text-xs text-gray-500 truncate max-w-[60%]">By {intention.user.name}</span>
+                  <span className="text-xs text-gray-500 truncate max-w-[60%]">
+                    By {intention.user.name}
+                  </span>
                   <StatusBadge status={intention.status} />
                 </div>
               </li>
@@ -272,10 +322,14 @@ export default async function AdminDashboardPage() {
             renderItem={(thanksgiving) => (
               <li key={thanksgiving.id} className="py-3">
                 <div>
-                  <p className="font-medium line-clamp-2">{thanksgiving.description}</p>
+                  <p className="font-medium line-clamp-2">
+                    {thanksgiving.description}
+                  </p>
                 </div>
                 <div className="mt-1.5 flex justify-between items-center">
-                  <span className="text-xs text-gray-500 truncate max-w-[60%]">By {thanksgiving.user.name}</span>
+                  <span className="text-xs text-gray-500 truncate max-w-[60%]">
+                    By {thanksgiving.user.name}
+                  </span>
                   <StatusBadge status={thanksgiving.status} />
                 </div>
               </li>
@@ -292,14 +346,24 @@ export default async function AdminDashboardPage() {
                 <div className="flex justify-between">
                   <div className="min-w-0 flex-1 pr-2">
                     <p className="font-medium truncate">
-                      {payment.type === "DONATION" ? `Donation (${payment.category?.replace("_", " ")})` : "Offering"}
+                      {payment.type === "DONATION"
+                        ? `Donation (${payment.category?.replace("_", " ")})`
+                        : "Offering"}
                     </p>
-                    {payment.description && <p className="text-sm text-gray-500 line-clamp-1">{payment.description}</p>}
+                    {payment.description && (
+                      <p className="text-sm text-gray-500 line-clamp-1">
+                        {payment.description}
+                      </p>
+                    )}
                   </div>
-                  <p className="font-bold whitespace-nowrap">{formatCurrency(payment.amount)}</p>
+                  <p className="font-bold whitespace-nowrap">
+                    {formatCurrency(payment.amount)}
+                  </p>
                 </div>
                 <div className="mt-1.5 flex justify-between items-center">
-                  <span className="text-xs text-gray-500 truncate max-w-[60%]">By {payment.user.name}</span>
+                  <span className="text-xs text-gray-500 truncate max-w-[60%]">
+                    By {payment.user.name}
+                  </span>
                   <StatusBadge status={payment.status} />
                 </div>
               </li>
@@ -308,7 +372,7 @@ export default async function AdminDashboardPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 // Component for stats cards
@@ -319,11 +383,11 @@ function StatsCard({
   icon,
   tooltip,
 }: {
-  title: string
-  value: number | string
-  href: string
-  icon?: React.ReactNode
-  tooltip?: string
+  title: string;
+  value: number | string;
+  href: string;
+  icon?: React.ReactNode;
+  tooltip?: string;
 }) {
   return (
     <Card>
@@ -335,18 +399,22 @@ function StatsCard({
       </CardHeader>
       <CardContent>
         <div className="flex items-baseline justify-between">
-          <div className="text-2xl font-semibold" title={tooltip}>
+          <div className="text-2xl text-black font-semibold" title={tooltip}>
             {value}
           </div>
           <Link href={href}>
-            <Button variant="outline" size="sm" className="h-8 px-3 text-xs whitespace-nowrap">
+            <Button
+              variant="secondary"
+              size="sm"
+              className="h-8 px-3 text-xs hover:bg-secondary whitespace-nowrap"
+            >
               View All
             </Button>
           </Link>
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }
 
 // Component for quick action buttons
@@ -356,22 +424,22 @@ function QuickActionButton({
   label,
   primary = false,
 }: {
-  href: string
-  icon: React.ReactNode
-  label: string
-  primary?: boolean
+  href: string;
+  icon: React.ReactNode;
+  label: string;
+  primary?: boolean;
 }) {
   return (
     <Button
-        variant={primary ? "default" : "outline"}
-        className="w-full h-auto py-3 px-4 mx-auto flex items-center justify-center text-sm font-medium"
-      >
-    <Link href={href} className="block">
+      variant={primary ? "default" : "secondary"}
+      className={`w-full h-auto py-3 px-4 mx-auto flex items-center justify-center text-sm font-medium hover:bg-${primary}`}
+    >
+      <Link href={href} className="block">
         {icon}
         <span className="truncate">{label}</span>
-    </Link>
-      </Button>
-  )
+      </Link>
+    </Button>
+  );
 }
 
 // Component for recent data cards
@@ -381,19 +449,21 @@ function RecentDataCard<T>({
   data,
   renderItem,
 }: {
-  title: string
-  emptyMessage: string
-  data: T[]
-  renderItem: (item: T) => React.ReactNode
+  title: string;
+  emptyMessage: string;
+  data: T[];
+  renderItem: (item: T) => React.ReactNode;
 }) {
   return (
     <Card>
-      <CardHeader className="pb-2 md:pb-4">
-        <CardTitle className="text-lg">{title}</CardTitle>
+      <CardHeader className=" pb-2 md:pb-4">
+        <CardTitle className=" text-black text-lg">{title}</CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className=" text-black">
         {data.length > 0 ? (
-          <ul className="divide-y divide-gray-100 -mt-2">{data.map(renderItem)}</ul>
+          <ul className="divide-y divide-gray-100 -mt-2">
+            {data.map(renderItem)}
+          </ul>
         ) : (
           <div className="py-8 text-center">
             <p className="text-gray-500">{emptyMessage}</p>
@@ -401,22 +471,22 @@ function RecentDataCard<T>({
         )}
       </CardContent>
     </Card>
-  )
+  );
 }
 
 // Component for status badges
 function StatusBadge({ status }: { status: string }) {
-  let bgColor = "bg-yellow-100 text-yellow-800 border-yellow-200"
+  let bgColor = "bg-yellow-100 text-yellow-800 border-yellow-200";
 
   if (status === "APPROVED" || status === "PAID") {
-    bgColor = "bg-green-100 text-green-800 border-green-200"
+    bgColor = "bg-green-100 text-green-800 border-green-200";
   } else if (status === "REJECTED" || status === "FAILED") {
-    bgColor = "bg-red-100 text-red-800 border-red-200"
+    bgColor = "bg-red-100 text-red-800 border-red-200";
   }
 
   return (
     <Badge variant="outline" className={`${bgColor} text-xs whitespace-nowrap`}>
       {status}
     </Badge>
-  )
+  );
 }

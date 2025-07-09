@@ -1,63 +1,114 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import Link from "next/link"
-import { createEvent } from "@/actions/event-actions"
-import { getChurchInfo } from "@/actions/church-info-actions"
-import { Form, FormField, FormLabel, FormInput, FormTextarea, FormCheckbox } from "@/components/ui/form"
-import { Button } from "@/components/ui/button"
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
-import { ErrorMessage } from "@/components/ui/error-message"
+import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import Link from "next/link";
+import { createEvent } from "@/actions/event-actions";
+import { getChurchInfo } from "@/actions/church-info-actions";
+import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+
+const eventSchema = z.object({
+  title: z.string().min(1, "Event title is required"),
+  description: z.string().min(1, "Description is required"),
+  date: z.string().min(1, "Date is required"),
+  time: z.string().min(1, "Time is required"),
+  location: z.string().optional(),
+  capacity: z.string().optional(),
+  useDefaultLocation: z.boolean().default(true),
+});
+
+type EventFormData = z.infer<typeof eventSchema>;
 
 export default function NewEventPage() {
-  const [error, setError] = useState<string | null>(null)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [defaultAddress, setDefaultAddress] = useState<string>("")
-  const [useDefaultLocation, setUseDefaultLocation] = useState(true)
-  const [customLocation, setCustomLocation] = useState("")
+  const [error, setError] = useState<string | null>(null);
+  const [defaultAddress, setDefaultAddress] = useState<string>("");
+
+  const form = useForm<EventFormData>({
+    resolver: zodResolver(eventSchema),
+    defaultValues: {
+      title: "",
+      description: "",
+      date: "",
+      time: "",
+      location: "",
+      capacity: "",
+      useDefaultLocation: true,
+    },
+  });
+
+  const {
+    handleSubmit,
+    watch,
+    formState: { isSubmitting },
+  } = form;
+  const useDefaultLocation = watch("useDefaultLocation");
 
   useEffect(() => {
     async function fetchChurchInfo() {
       try {
-        const churchInfo = await getChurchInfo()
-        setDefaultAddress(churchInfo.address)
+        const churchInfo = await getChurchInfo();
+        setDefaultAddress(churchInfo.address);
       } catch (error) {
-        console.error("Error fetching church info:", error)
-        setError("Failed to fetch church information")
+        console.error("Error fetching church info:", error);
+        setError("Failed to fetch church information");
       }
     }
+    fetchChurchInfo();
+  }, []);
 
-    fetchChurchInfo()
-  }, [])
-
-  async function handleSubmit(formData: FormData) {
-    setError(null)
-    setIsSubmitting(true)
-
-    // Add the useDefaultLocation flag to the form data
-    formData.set("useDefaultLocation", useDefaultLocation.toString())
-
-    // If using default location, clear any custom location to ensure default is used
-    if (useDefaultLocation) {
-      formData.set("location", "")
-    }
+  async function onSubmit(data: EventFormData) {
+    setError(null);
 
     try {
-      const result = await createEvent(formData)
+      // Create FormData for server action
+      const formData = new FormData();
+      formData.set("title", data.title);
+      formData.set("description", data.description);
+      formData.set("date", data.date);
+      formData.set("time", data.time);
+      formData.set("useDefaultLocation", data.useDefaultLocation.toString());
 
+      // Only set location if not using default
+      if (!data.useDefaultLocation && data.location) {
+        formData.set("location", data.location);
+      } else {
+        formData.set("location", "");
+      }
+
+      if (data.capacity) {
+        formData.set("capacity", data.capacity);
+      }
+
+      const result = await createEvent(formData);
       if (result?.error) {
-        setError(result.error)
-        setIsSubmitting(false)
+        setError(result.error);
       }
     } catch (error) {
-      console.error("Error creating event:", error)
-      setError("Failed to create event")
-      setIsSubmitting(false)
+      console.error("Error creating event:", error);
+      setError("Failed to create event");
     }
   }
 
+  // Get today's date for min date validation
+  const today = new Date().toISOString().split("T")[0];
+
   return (
-    <div className="bg-gray-50 min-h-screen">
+    <div className="bg-gray-50 text-black min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-gray-900">Create Event</h1>
@@ -68,88 +119,155 @@ export default function NewEventPage() {
           <CardHeader>
             <CardTitle>Event Details</CardTitle>
           </CardHeader>
-
           <CardContent>
-            <Form action={handleSubmit}>
-              {error && <ErrorMessage message={error} className="mb-4" />}
-
-              <FormField>
-                <FormLabel htmlFor="title">Event Title</FormLabel>
-                <FormInput id="title" name="title" required placeholder="e.g., Christmas Carol Service" />
-              </FormField>
-
-              <FormField>
-                <FormLabel htmlFor="description">Description</FormLabel>
-                <FormTextarea id="description" name="description" rows={3} required placeholder="Describe the event" />
-              </FormField>
-
-              <FormField>
-                <FormLabel htmlFor="date">Date</FormLabel>
-                <FormInput id="date" name="date" type="date" min={new Date().toISOString().split("T")[0]} required />
-              </FormField>
-
-              <FormField>
-                <FormLabel htmlFor="time">Time</FormLabel>
-                <FormInput id="time" name="time" type="time" required />
-              </FormField>
-
-      
-
-              <FormField>
-                <div className="flex items-center space-x-2 mb-2">
-                  <FormCheckbox
-                    id="useDefaultLocation"
-                    checked={useDefaultLocation}
-                    onCheckedChange={(checked) => {
-                      setUseDefaultLocation(checked === true)
-                    }}
-                  />
-                  <FormLabel htmlFor="useDefaultLocation" className="cursor-pointer">
-                    Use default church address
-                  </FormLabel>
-                </div>
-                {useDefaultLocation ? (
-                  <div className="p-3 bg-gray-100 rounded-md">
-                    <p className="text-gray-700">{defaultAddress || "Loading default address..."}</p>
-                  </div>
-                ) : (
-                  <FormInput
-                    id="location"
-                    name="location"
-                    required={!useDefaultLocation}
-                    placeholder="e.g., Main Church Hall"
-                    value={customLocation}
-                    onChange={(e) => setCustomLocation(e.target.value)}
-                  />
+            <Form {...form}>
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                {error && (
+                  <Alert variant="destructive">
+                    <AlertDescription>{error}</AlertDescription>
+                  </Alert>
                 )}
-              </FormField>
 
-              <FormField>
-                <FormLabel htmlFor="capacity">Capacity (Optional)</FormLabel>
-                <FormInput
-                  id="capacity"
-                  name="capacity"
-                  type="number"
-                  min="1"
-                  placeholder="Leave blank for unlimited"
+                <FormField
+                  control={form.control}
+                  name="title"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Event Title</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="e.g., Christmas Carol Service"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-              </FormField>
 
-              <div className="mt-6 flex justify-end space-x-4">
-                <Link href="/admin/events">
-                  <Button variant="outline" type="button">
-                    Cancel
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Description</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Describe the event"
+                          rows={3}
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="date"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Date</FormLabel>
+                      <FormControl>
+                        <Input type="date" min={today} {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="time"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Time</FormLabel>
+                      <FormControl>
+                        <Input type="time" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="useDefaultLocation"
+                  render={({ field }) => (
+                    <FormItem>
+                      <div className="flex items-center space-x-2 mb-2">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                        <FormLabel className="cursor-pointer">
+                          Use default church address
+                        </FormLabel>
+                      </div>
+                      {useDefaultLocation ? (
+                        <div className="p-3 bg-gray-100 rounded-md">
+                          <p className="text-gray-700">
+                            {defaultAddress || "Loading default address..."}
+                          </p>
+                        </div>
+                      ) : (
+                        <FormField
+                          control={form.control}
+                          name="location"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormControl>
+                                <Input
+                                  placeholder="e.g., Main Church Hall"
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      )}
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="capacity"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Capacity (Optional)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="1"
+                          placeholder="Leave blank for unlimited"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="flex justify-end space-x-4 pt-4">
+                  <Link href="/admin/events">
+                    <Button variant="outline" type="button">
+                      Cancel
+                    </Button>
+                  </Link>
+                  <Button type="submit" disabled={isSubmitting}>
+                    {isSubmitting ? "Creating..." : "Create Event"}
                   </Button>
-                </Link>
-                <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? "Creating..." : "Create Event"}
-                </Button>
-              </div>
+                </div>
+              </form>
             </Form>
           </CardContent>
         </Card>
       </div>
     </div>
-  )
+  );
 }
-

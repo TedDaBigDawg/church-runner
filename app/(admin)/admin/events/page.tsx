@@ -1,20 +1,20 @@
-import Link from "next/link"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { requireAdmin } from "@/lib/auth"
-import { prisma } from "@/lib/db"
-import { formatDate, formatTime } from "@/lib/utils"
-import { deleteEvent } from "@/actions/event-actions"
+import Link from "next/link";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { requireAdmin } from "@/lib/auth";
+import { prisma } from "@/lib/db";
+import { formatDate, formatTime } from "@/lib/utils";
+import { deleteEvent } from "@/actions/event-actions";
 
 export default async function AdminEventsPage() {
-  await requireAdmin()
+  await requireAdmin();
 
   // Fetch upcoming events
   const upcomingEvents = await prisma.event.findMany({
     where: { date: { gte: new Date() } },
     orderBy: { date: "asc" },
     include: { rsvps: { include: { user: true } } },
-  })
+  });
 
   // Fetch past events
   const pastEvents = await prisma.event.findMany({
@@ -22,10 +22,10 @@ export default async function AdminEventsPage() {
     orderBy: { date: "desc" },
     take: 10,
     include: { rsvps: { include: { user: true } } },
-  })
+  });
 
   return (
-    <div className="bg-gray-50 min-h-screen">
+    <div className="bg-gray-50 text-black min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex justify-between items-center mb-8">
           <div>
@@ -38,7 +38,9 @@ export default async function AdminEventsPage() {
         </div>
 
         <div className="mb-12">
-          <h2 className="text-xl font-bold text-gray-900 mb-6">Upcoming Events</h2>
+          <h2 className="text-xl font-bold text-gray-900 mb-6">
+            Upcoming Events
+          </h2>
 
           {upcomingEvents.length > 0 ? (
             <div className="space-y-6">
@@ -53,8 +55,16 @@ export default async function AdminEventsPage() {
                             Edit
                           </Button>
                         </Link>
-                        <form action={async (formData: FormData) => { await deleteEvent(event.id); }}>
-                          <Button variant="outline" size="sm" className="text-red-600 hover:text-red-800">
+                        <form
+                          action={async (formData: FormData) => {
+                            await deleteEvent(event.id);
+                          }}
+                        >
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-red-600 hover:text-red-800"
+                          >
                             Delete
                           </Button>
                         </form>
@@ -64,7 +74,9 @@ export default async function AdminEventsPage() {
                   <CardContent>
                     <div className="grid md:grid-cols-2 gap-6">
                       <div>
-                        <p className="text-gray-600 mb-4">{event.description}</p>
+                        <p className="text-gray-600 mb-4">
+                          {event.description}
+                        </p>
                         <div className="space-y-2 text-sm">
                           <div className="flex justify-between">
                             <span className="font-medium">Date:</span>
@@ -81,14 +93,17 @@ export default async function AdminEventsPage() {
                           <div className="flex justify-between">
                             <span className="font-medium">RSVPs:</span>
                             <span>
-                              {event.rsvps.length} {event.capacity ? `/ ${event.capacity}` : ""}
+                              {event.rsvps.length}{" "}
+                              {event.capacity ? `/ ${event.capacity}` : ""}
                             </span>
                           </div>
                         </div>
                       </div>
 
                       <div>
-                        <h3 className="text-lg font-medium text-gray-900 mb-4">Attendees</h3>
+                        <h3 className="text-lg font-medium text-gray-900 mb-4">
+                          Attendees
+                        </h3>
                         {event.rsvps.length > 0 ? (
                           <ul className="divide-y divide-gray-200 max-h-60 overflow-y-auto">
                             {event.rsvps.map((rsvp) => (
@@ -97,8 +112,12 @@ export default async function AdminEventsPage() {
                                   className="
 flex justify-between"
                                 >
-                                  <span className="font-medium">{rsvp.user.name}</span>
-                                  <span className="text-gray-500">{rsvp.user.email}</span>
+                                  <span className="font-medium">
+                                    {rsvp.user.name}
+                                  </span>
+                                  <span className="text-gray-500">
+                                    {rsvp.user.email}
+                                  </span>
                                 </div>
                               </li>
                             ))}
@@ -164,18 +183,30 @@ flex justify-between"
                       {pastEvents.map((event) => (
                         <tr key={event.id}>
                           <td className="px-6 py-4">
-                            <div className="text-sm font-medium text-gray-900">{event.title}</div>
-                            <div className="text-sm text-gray-500">{event.description}</div>
+                            <div className="text-sm font-medium text-gray-900">
+                              {event.title}
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              {event.description}
+                            </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-500">{formatDate(event.date)}</div>
-                            <div className="text-sm text-gray-500">{formatTime(event.date)}</div>
+                            <div className="text-sm text-gray-500">
+                              {formatDate(event.date)}
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              {formatTime(event.date)}
+                            </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-500">{event.location}</div>
+                            <div className="text-sm text-gray-500">
+                              {event.location}
+                            </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-500">{event.rsvps.length} attendees</div>
+                            <div className="text-sm text-gray-500">
+                              {event.rsvps.length} attendees
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -194,6 +225,5 @@ flex justify-between"
         </div>
       </div>
     </div>
-  )
+  );
 }
-

@@ -1,12 +1,14 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function NewDonationLoading() {
   return (
-    <div className="bg-gray-50 min-h-screen">
+    <div className="bg-gray-50 text-black min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-gray-900">Make a Donation</h1>
-          <p className="text-gray-600">Support our church through your generous donation.</p>
+          <p className="text-gray-600">
+            Support our church through your generous donation.
+          </p>
         </div>
 
         <Card className="max-w-2xl mx-auto">
@@ -21,6 +23,5 @@ export default function NewDonationLoading() {
         </Card>
       </div>
     </div>
-  )
+  );
 }
-

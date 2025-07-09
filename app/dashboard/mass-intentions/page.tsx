@@ -1,20 +1,20 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
+import { useEffect, useState } from "react";
 
 // Use Prisma's MassStatus type
-import type { $Enums } from "@prisma/client"
-type MassStatus = $Enums.MassStatus
-import Link from "next/link"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { formatDate, formatTime } from "@/lib/utils"
+import type { $Enums } from "@prisma/client";
+type MassStatus = $Enums.MassStatus;
+import Link from "next/link";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { formatDate, formatTime } from "@/lib/utils";
 import {
   getPastMassIntentions,
   getPastMassIntentionsCount,
   getUpcomingMassIntentions,
   getUpcomingMassIntentionsCount,
-} from "@/actions/mass-intention-actions"
+} from "@/actions/mass-intention-actions";
 // Update the Dialog and DialogContent imports to include custom styling
 import {
   Dialog,
@@ -24,133 +24,135 @@ import {
   DialogTitle,
   DialogFooter,
   DialogClose,
-} from "@/components/ui/dialog"
-import { X } from "lucide-react"
-import { Skeleton } from "@/components/ui/skeleton"
-import Loading from "@/app/loading"
+} from "@/components/ui/dialog";
+import { X } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import Loading from "@/app/loading";
 
 // Define a type for the intention object
 type Intention = {
-  id: string
-  name: string
-  intention: string
-  status: string
+  id: string;
+  name: string;
+  intention: string;
+  status: string;
   mass: {
-    id: string
-    createdAt: Date
-    updatedAt: Date
-    status: MassStatus
-    title: string
-    date: Date
-    location: string
-    availableIntentionsSlots: number
-    availableThanksgivingsSlots: number
-  }
-}
+    id: string;
+    createdAt: Date;
+    updatedAt: Date;
+    status: MassStatus;
+    title: string;
+    date: Date;
+    location: string;
+    availableIntentionsSlots: number;
+    availableThanksgivingsSlots: number;
+  };
+};
 
 // Add this loading skeleton component
 const LoadingSkeleton = () => (
-    <div className="justify-center items-center bg-gray-200 rounded mb-2 animate-pulse" >
-        {/* <Loading /> */}
-        <p className="text-gray-500 ">Loading...</p>
-    </div>
-)
+  <div className="justify-center items-center bg-gray-200 rounded mb-2 animate-pulse">
+    {/* <Loading /> */}
+    <p className="text-gray-500 ">Loading...</p>
+  </div>
+);
 
 export default function MassIntentionsPage() {
-  const itemsPerPage = 5
+  const itemsPerPage = 5;
 
   // Separate pagination states for upcoming and past intentions
-  const [upcomingCurrentPage, setUpcomingCurrentPage] = useState(1)
-  const [pastCurrentPage, setPastCurrentPage] = useState(1)
+  const [upcomingCurrentPage, setUpcomingCurrentPage] = useState(1);
+  const [pastCurrentPage, setPastCurrentPage] = useState(1);
 
-  const [upcomingIntentions, setUpcomingIntentions] = useState<Intention[]>([])
-  const [pastIntentions, setPastIntentions] = useState<Intention[]>([])
+  const [upcomingIntentions, setUpcomingIntentions] = useState<Intention[]>([]);
+  const [pastIntentions, setPastIntentions] = useState<Intention[]>([]);
 
-  const [totalUpcoming, setTotalUpcoming] = useState(0)
-  const [totalPast, setTotalPast] = useState(0)
+  const [totalUpcoming, setTotalUpcoming] = useState(0);
+  const [totalPast, setTotalPast] = useState(0);
 
   // Modal state
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [selectedIntention, setSelectedIntention] = useState<Intention | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedIntention, setSelectedIntention] = useState<Intention | null>(
+    null
+  );
 
+  const [upcomingLoading, setUpcomingLoading] = useState(true);
+  const [pastLoading, setPastLoading] = useState(true);
 
-  const [upcomingLoading, setUpcomingLoading] = useState(true)
-  const [pastLoading, setPastLoading] = useState(true)
-
-  const totalUpcomingPages = Math.ceil(totalUpcoming / itemsPerPage)
-  const totalPastPages = Math.ceil(totalPast / itemsPerPage)
+  const totalUpcomingPages = Math.ceil(totalUpcoming / itemsPerPage);
+  const totalPastPages = Math.ceil(totalPast / itemsPerPage);
 
   // Fetch upcoming intentions when upcomingCurrentPage changes
   useEffect(() => {
     async function fetchUpcomingData() {
-      setUpcomingLoading(true)
+      setUpcomingLoading(true);
       try {
-        const upcoming = await getUpcomingMassIntentions(upcomingCurrentPage)
-        const totalUp = await getUpcomingMassIntentionsCount()
+        const upcoming = await getUpcomingMassIntentions(upcomingCurrentPage);
+        const totalUp = await getUpcomingMassIntentionsCount();
 
-        setUpcomingIntentions(upcoming.upcomingMassIntentions)
-        setTotalUpcoming(Number(totalUp))
+        setUpcomingIntentions(upcoming.upcomingMassIntentions);
+        setTotalUpcoming(Number(totalUp));
       } catch (error) {
-        console.error("Failed to fetch upcoming intentions:", error)
+        console.error("Failed to fetch upcoming intentions:", error);
       } finally {
-        setUpcomingLoading(false)
+        setUpcomingLoading(false);
       }
     }
 
-    fetchUpcomingData()
-  }, [upcomingCurrentPage])
+    fetchUpcomingData();
+  }, [upcomingCurrentPage]);
 
   // Fetch past intentions when pastCurrentPage changes
   useEffect(() => {
     async function fetchPastData() {
-      setPastLoading(true)
+      setPastLoading(true);
       try {
-        const past = await getPastMassIntentions(pastCurrentPage)
-        const totalPastCount = await getPastMassIntentionsCount()
+        const past = await getPastMassIntentions(pastCurrentPage);
+        const totalPastCount = await getPastMassIntentionsCount();
 
         if (Array.isArray(past)) {
-          setPastIntentions(past)
+          setPastIntentions(past);
         } else {
-          console.error("Failed to fetch past intentions:", past)
-          setPastIntentions([]) // Reset to an empty array on error
+          console.error("Failed to fetch past intentions:", past);
+          setPastIntentions([]); // Reset to an empty array on error
         }
 
-        setTotalPast(Number(totalPastCount))
+        setTotalPast(Number(totalPastCount));
       } catch (error) {
-        console.error("Failed to fetch past intentions:", error)
-        setPastIntentions([])
+        console.error("Failed to fetch past intentions:", error);
+        setPastIntentions([]);
       } finally {
-        setPastLoading(false)
+        setPastLoading(false);
       }
     }
 
-    fetchPastData()
-  }, [pastCurrentPage])
-
+    fetchPastData();
+  }, [pastCurrentPage]);
 
   // Pagination handlers for upcoming intentions
   const handleUpcomingPrevious = () => {
-    if (upcomingCurrentPage > 1) setUpcomingCurrentPage((prev) => prev - 1)
-  }
+    if (upcomingCurrentPage > 1) setUpcomingCurrentPage((prev) => prev - 1);
+  };
 
   const handleUpcomingNext = () => {
-    if (upcomingCurrentPage < totalUpcomingPages) setUpcomingCurrentPage((prev) => prev + 1)
-  }
+    if (upcomingCurrentPage < totalUpcomingPages)
+      setUpcomingCurrentPage((prev) => prev + 1);
+  };
 
   // Pagination handlers for past intentions
   const handlePastPrevious = () => {
-    if (pastCurrentPage > 1) setPastCurrentPage((prev) => prev - 1)
-  }
+    if (pastCurrentPage > 1) setPastCurrentPage((prev) => prev - 1);
+  };
 
   const handlePastNext = () => {
-    if (pastCurrentPage < totalPastPages) setPastCurrentPage((prev) => prev + 1)
-  }
+    if (pastCurrentPage < totalPastPages)
+      setPastCurrentPage((prev) => prev + 1);
+  };
 
   // Handler for opening the modal with the selected intention
   const handleIntentionClick = (intention: Intention) => {
-    setSelectedIntention(intention)
-    setIsModalOpen(true)
-  }
+    setSelectedIntention(intention);
+    setIsModalOpen(true);
+  };
 
   // Function to render intention row with click handler
   const renderIntentionRow = (intention: Intention) => (
@@ -167,7 +169,9 @@ export default function MassIntentionsPage() {
       </td>
       <td className="px-6 py-4">
         <div>{formatDate(intention.mass.date)}</div>
-        <div className="text-sm text-gray-500">{formatTime(intention.mass.date)}</div>
+        <div className="text-sm text-gray-500">
+          {formatTime(intention.mass.date)}
+        </div>
       </td>
       <td className="px-6 py-4">
         <span
@@ -175,26 +179,30 @@ export default function MassIntentionsPage() {
             intention.status === "APPROVED"
               ? "bg-green-100 text-green-800"
               : intention.status === "REJECTED"
-                ? "bg-red-100 text-red-800"
-                : "bg-yellow-100 text-yellow-800"
+              ? "bg-red-100 text-red-800"
+              : "bg-yellow-100 text-yellow-800"
           }`}
         >
           {intention.status}
         </span>
       </td>
     </tr>
-  )
+  );
 
   return (
-    <div className="bg-gray-50 min-h-screen">
+    <div className="bg-gray-50 text-black min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Mass Intentions</h1>
-            <p className="text-gray-600">Request Mass intentions for your loved ones.</p>
+            <h1 className="text-2xl font-bold text-gray-900">
+              Mass Intentions
+            </h1>
+            <p className="text-gray-600">
+              Request Mass intentions for your loved ones.
+            </p>
           </div>
           <Link href="/dashboard/mass-intentions/new">
-            <Button>New Intention</Button>
+            <Button className=" hover:bg-primary ">New Intention</Button>
           </Link>
         </div>
 
@@ -204,10 +212,10 @@ export default function MassIntentionsPage() {
           </CardHeader>
           <CardContent>
             {upcomingLoading ? (
-            <div className="h-10 flex justify-center items-center py-8">
-            <LoadingSkeleton />
-          </div>
-          ) : upcomingIntentions.length > 0 ? (
+              <div className="h-10 flex justify-center items-center py-8">
+                <LoadingSkeleton />
+              </div>
+            ) : upcomingIntentions.length > 0 ? (
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
@@ -236,9 +244,13 @@ export default function MassIntentionsPage() {
               </div>
             ) : (
               <div className="text-center py-8">
-                <p className="text-gray-500 mb-4">You don't have any upcoming Mass intentions yet.</p>
+                <p className="text-gray-500 mb-4">
+                  You don't have any upcoming Mass intentions yet.
+                </p>
                 <Link href="/dashboard/mass-intentions/new">
-                  <Button>Request Mass Intention</Button>
+                  <Button className=" hover:bg-primary">
+                    Request Mass Intention
+                  </Button>
                 </Link>
               </div>
             )}
@@ -248,13 +260,19 @@ export default function MassIntentionsPage() {
         {/* Pagination for upcoming intentions */}
         {totalUpcomingPages > 1 && (
           <div className="flex justify-between mt-4">
-            <Button disabled={upcomingCurrentPage <= 1} onClick={handleUpcomingPrevious}>
+            <Button
+              disabled={upcomingCurrentPage <= 1}
+              onClick={handleUpcomingPrevious}
+            >
               Previous
             </Button>
             <span className="text-sm text-gray-600">
               Page {upcomingCurrentPage} of {totalUpcomingPages}
             </span>
-            <Button disabled={upcomingCurrentPage >= totalUpcomingPages} onClick={handleUpcomingNext}>
+            <Button
+              disabled={upcomingCurrentPage >= totalUpcomingPages}
+              onClick={handleUpcomingNext}
+            >
               Next
             </Button>
           </div>
@@ -270,7 +288,7 @@ export default function MassIntentionsPage() {
               <div className="h-10 flex justify-center items-center py-8">
                 <LoadingSkeleton />
               </div>
-          ) : pastIntentions.length > 0 ? (
+            ) : pastIntentions.length > 0 ? (
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
@@ -292,12 +310,16 @@ export default function MassIntentionsPage() {
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">{pastIntentions.map(renderIntentionRow)}</tbody>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {pastIntentions.map(renderIntentionRow)}
+                  </tbody>
                 </table>
               </div>
             ) : (
               <div className="text-center py-8">
-                <p className="text-gray-500">You don't have any past Mass intentions.</p>
+                <p className="text-gray-500">
+                  You don't have any past Mass intentions.
+                </p>
               </div>
             )}
           </CardContent>
@@ -306,13 +328,19 @@ export default function MassIntentionsPage() {
         {/* Pagination for past intentions */}
         {totalPastPages > 1 && (
           <div className="flex justify-between mt-4">
-            <Button disabled={pastCurrentPage <= 1} onClick={handlePastPrevious}>
+            <Button
+              disabled={pastCurrentPage <= 1}
+              onClick={handlePastPrevious}
+            >
               Previous
             </Button>
             <span className="text-sm text-gray-600">
               Page {pastCurrentPage} of {totalPastPages}
             </span>
-            <Button disabled={pastCurrentPage >= totalPastPages} onClick={handlePastNext}>
+            <Button
+              disabled={pastCurrentPage >= totalPastPages}
+              onClick={handlePastNext}
+            >
               Next
             </Button>
           </div>
@@ -329,7 +357,9 @@ export default function MassIntentionsPage() {
             }}
           >
             <DialogHeader className="border-b pb-2">
-              <DialogTitle className="text-xl font-semibold text-gray-900">Mass Intention Details</DialogTitle>
+              <DialogTitle className="text-xl font-semibold text-gray-900">
+                Mass Intention Details
+              </DialogTitle>
               <DialogDescription className="text-gray-600">
                 Complete information about this mass intention.
               </DialogDescription>
@@ -342,45 +372,71 @@ export default function MassIntentionsPage() {
             {selectedIntention && (
               <div className="grid gap-4 py-4 bg-white">
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <span className="text-sm font-medium text-gray-700">Name:</span>
-                  <span className="col-span-3 text-gray-900">{selectedIntention.name}</span>
+                  <span className="text-sm font-medium text-gray-700">
+                    Name:
+                  </span>
+                  <span className="col-span-3 text-gray-900">
+                    {selectedIntention.name}
+                  </span>
                 </div>
 
                 <div className="grid grid-cols-4 items-start gap-4">
-                  <span className="text-sm font-medium text-gray-700">Intention:</span>
-                  <span className="col-span-3 text-gray-900">{selectedIntention.intention}</span>
+                  <span className="text-sm font-medium text-gray-700">
+                    Intention:
+                  </span>
+                  <span className="col-span-3 text-gray-900">
+                    {selectedIntention.intention}
+                  </span>
                 </div>
 
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <span className="text-sm font-medium text-gray-700">Mass Title:</span>
-                  <span className="col-span-3 text-gray-900">{selectedIntention.mass.title}</span>
+                  <span className="text-sm font-medium text-gray-700">
+                    Mass Title:
+                  </span>
+                  <span className="col-span-3 text-gray-900">
+                    {selectedIntention.mass.title}
+                  </span>
                 </div>
 
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <span className="text-sm font-medium text-gray-700">Location:</span>
-                  <span className="col-span-3 text-gray-900">{selectedIntention.mass.location}</span>
+                  <span className="text-sm font-medium text-gray-700">
+                    Location:
+                  </span>
+                  <span className="col-span-3 text-gray-900">
+                    {selectedIntention.mass.location}
+                  </span>
                 </div>
 
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <span className="text-sm font-medium text-gray-700">Date:</span>
-                  <span className="col-span-3 text-gray-900">{formatDate(selectedIntention.mass.date)}</span>
+                  <span className="text-sm font-medium text-gray-700">
+                    Date:
+                  </span>
+                  <span className="col-span-3 text-gray-900">
+                    {formatDate(selectedIntention.mass.date)}
+                  </span>
                 </div>
 
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <span className="text-sm font-medium text-gray-700">Time:</span>
-                  <span className="col-span-3 text-gray-900">{formatTime(selectedIntention.mass.date)}</span>
+                  <span className="text-sm font-medium text-gray-700">
+                    Time:
+                  </span>
+                  <span className="col-span-3 text-gray-900">
+                    {formatTime(selectedIntention.mass.date)}
+                  </span>
                 </div>
 
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <span className="text-sm font-medium text-gray-700">Status:</span>
+                  <span className="text-sm font-medium text-gray-700">
+                    Status:
+                  </span>
                   <span className="col-span-3">
                     <span
                       className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                         selectedIntention.status === "APPROVED"
                           ? "bg-green-100 text-green-800"
                           : selectedIntention.status === "REJECTED"
-                            ? "bg-red-100 text-red-800"
-                            : "bg-yellow-100 text-yellow-800"
+                          ? "bg-red-100 text-red-800"
+                          : "bg-yellow-100 text-yellow-800"
                       }`}
                     >
                       {selectedIntention.status}
@@ -389,19 +445,30 @@ export default function MassIntentionsPage() {
                 </div>
 
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <span className="text-sm font-medium text-gray-700">Created:</span>
-                  <span className="col-span-3 text-gray-900">{formatDate(selectedIntention.mass.createdAt)}</span>
+                  <span className="text-sm font-medium text-gray-700">
+                    Created:
+                  </span>
+                  <span className="col-span-3 text-gray-900">
+                    {formatDate(selectedIntention.mass.createdAt)}
+                  </span>
                 </div>
 
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <span className="text-sm font-medium text-gray-700">Last Updated:</span>
-                  <span className="col-span-3 text-gray-900">{formatDate(selectedIntention.mass.updatedAt)}</span>
+                  <span className="text-sm font-medium text-gray-700">
+                    Last Updated:
+                  </span>
+                  <span className="col-span-3 text-gray-900">
+                    {formatDate(selectedIntention.mass.updatedAt)}
+                  </span>
                 </div>
               </div>
             )}
 
             <DialogFooter className="border-t pt-4 mt-2">
-              <Button onClick={() => setIsModalOpen(false)} className="w-full sm:w-auto">
+              <Button
+                onClick={() => setIsModalOpen(false)}
+                className="w-full sm:w-auto"
+              >
                 Close
               </Button>
             </DialogFooter>
@@ -409,5 +476,5 @@ export default function MassIntentionsPage() {
         </Dialog>
       </div>
     </div>
-  )
+  );
 }

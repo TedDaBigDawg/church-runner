@@ -1,13 +1,13 @@
-import Link from "next/link"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { requireAdmin } from "@/lib/auth"
-import { prisma } from "@/lib/db"
-import { formatDate, formatTime } from "@/lib/utils"
-import { deleteMass } from "@/actions/mass-actions"
+import Link from "next/link";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { requireAdmin } from "@/lib/auth";
+import { prisma } from "@/lib/db";
+import { formatDate, formatTime } from "@/lib/utils";
+import { deleteMass } from "@/actions/mass-actions";
 
 export default async function AdminMassesPage() {
-  await requireAdmin()
+  await requireAdmin();
 
   // Fetch all masses
   const masses = await prisma.mass.findMany({
@@ -20,20 +20,22 @@ export default async function AdminMassesPage() {
         },
       },
     },
-  })
+  });
 
   // Group masses by upcoming and past
-  const now = new Date()
-  const upcomingMasses = masses.filter((mass) => mass.date >= now)
-  const pastMasses = masses.filter((mass) => mass.date < now)
+  const now = new Date();
+  const upcomingMasses = masses.filter((mass) => mass.date >= now);
+  const pastMasses = masses.filter((mass) => mass.date < now);
 
   return (
-    <div className="bg-gray-50 min-h-screen">
+    <div className="bg-gray-50 text-black min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Manage Masses</h1>
-            <p className="text-gray-600">Create and manage masses with intention and thanksgiving slots.</p>
+            <p className="text-gray-600">
+              Create and manage masses with intention and thanksgiving slots.
+            </p>
           </div>
           <Link href="/admin/masses/new">
             <Button>Create Mass</Button>
@@ -41,7 +43,9 @@ export default async function AdminMassesPage() {
         </div>
 
         <div className="mb-12">
-          <h2 className="text-xl font-bold text-gray-900 mb-6">Upcoming Masses</h2>
+          <h2 className="text-xl font-bold text-gray-900 mb-6">
+            Upcoming Masses
+          </h2>
 
           {upcomingMasses.length > 0 ? (
             <div className="space-y-6">
@@ -56,8 +60,18 @@ export default async function AdminMassesPage() {
                             Edit
                           </Button>
                         </Link>
-                        <form action={deleteMass.bind(null, mass.id)}>
-                          <Button variant="outline" size="sm" className="text-red-600 hover:text-red-800">
+                        <form
+                          onSubmit={async (e) => {
+                            e.preventDefault();
+                            await deleteMass(mass.id);
+                          }}
+                        >
+                          <Button
+                            type="submit"
+                            variant="outline"
+                            size="sm"
+                            className="text-red-600 hover:text-red-800"
+                          >
                             Delete
                           </Button>
                         </form>
@@ -82,7 +96,13 @@ export default async function AdminMassesPage() {
                           </div>
                           <div className="flex justify-between">
                             <span className="font-medium">Status:</span>
-                            <span className={`${mass.status === "AVAILABLE" ? "text-green-600" : "text-red-600"}`}>
+                            <span
+                              className={`${
+                                mass.status === "AVAILABLE"
+                                  ? "text-green-600"
+                                  : "text-red-600"
+                              }`}
+                            >
                               {mass.status}
                             </span>
                           </div>
@@ -90,14 +110,18 @@ export default async function AdminMassesPage() {
                       </div>
 
                       <div>
-                        <h3 className="text-lg font-medium text-gray-900 mb-4">Slot Availability</h3>
+                        <h3 className="text-lg font-medium text-gray-900 mb-4">
+                          Slot Availability
+                        </h3>
                         <div className="space-y-4">
                           <div className="flex justify-between items-center">
                             <span>Mass Intentions:</span>
                             <div className="flex items-center">
                               <span className="font-medium mr-2">
                                 {mass._count.massIntentions} booked /{" "}
-                                {mass._count.massIntentions + mass.availableIntentionsSlots} total
+                                {mass._count.massIntentions +
+                                  mass.availableIntentionsSlots}{" "}
+                                total
                               </span>
                               <span
                                 className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
@@ -115,7 +139,9 @@ export default async function AdminMassesPage() {
                             <div className="flex items-center">
                               <span className="font-medium mr-2">
                                 {mass._count.thanksgivings} booked /{" "}
-                                {mass._count.thanksgivings + mass.availableThanksgivingsSlots} total
+                                {mass._count.thanksgivings +
+                                  mass.availableThanksgivingsSlots}{" "}
+                                total
                               </span>
                               <span
                                 className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
@@ -193,20 +219,32 @@ export default async function AdminMassesPage() {
                       {pastMasses.map((mass) => (
                         <tr key={mass.id}>
                           <td className="px-6 py-4">
-                            <div className="text-sm font-medium text-gray-900">{mass.title}</div>
+                            <div className="text-sm font-medium text-gray-900">
+                              {mass.title}
+                            </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-500">{formatDate(mass.date)}</div>
-                            <div className="text-sm text-gray-500">{formatTime(mass.date)}</div>
+                            <div className="text-sm text-gray-500">
+                              {formatDate(mass.date)}
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              {formatTime(mass.date)}
+                            </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-500">{mass.location}</div>
+                            <div className="text-sm text-gray-500">
+                              {mass.location}
+                            </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-500">{mass._count.massIntentions} booked</div>
+                            <div className="text-sm text-gray-500">
+                              {mass._count.massIntentions} booked
+                            </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-500">{mass._count.thanksgivings} booked</div>
+                            <div className="text-sm text-gray-500">
+                              {mass._count.thanksgivings} booked
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -225,6 +263,5 @@ export default async function AdminMassesPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }
-

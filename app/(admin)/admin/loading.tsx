@@ -1,6 +1,6 @@
 export default function AdminLoading() {
   return (
-    <div className="bg-gray-50 min-h-screen">
+    <div className="bg-gray-50 text-black min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
           <div className="h-8 w-64 bg-gray-200 rounded animate-pulse"></div>
@@ -22,7 +22,10 @@ export default function AdminLoading() {
               <div className="h-6 w-48 bg-gray-200 rounded animate-pulse"></div>
               <div className="space-y-3 mt-6">
                 {[1, 2, 3, 4].map((j) => (
-                  <div key={j} className="h-4 w-full bg-gray-200 rounded animate-pulse"></div>
+                  <div
+                    key={j}
+                    className="h-4 w-full bg-gray-200 rounded animate-pulse"
+                  ></div>
                 ))}
               </div>
             </div>
@@ -35,7 +38,10 @@ export default function AdminLoading() {
               <div className="h-6 w-48 bg-gray-200 rounded animate-pulse"></div>
               <div className="space-y-3 mt-6">
                 {[1, 2, 3].map((j) => (
-                  <div key={j} className="h-4 w-full bg-gray-200 rounded animate-pulse"></div>
+                  <div
+                    key={j}
+                    className="h-4 w-full bg-gray-200 rounded animate-pulse"
+                  ></div>
                 ))}
               </div>
             </div>
@@ -43,6 +49,5 @@ export default function AdminLoading() {
         </div>
       </div>
     </div>
-  )
+  );
 }
-

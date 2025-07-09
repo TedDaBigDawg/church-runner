@@ -5,7 +5,13 @@ import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { login } from "@/actions/auth-actions"; // Ensure this is client-safe.
 import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardFooter,
+} from "@/components/ui/card";
 import { ErrorMessage } from "@/components/ui/error-message";
 import { loginSchema } from "@/lib/validations";
 
@@ -48,30 +54,29 @@ export default function LoginPage() {
     e.preventDefault();
     setError(null);
     setIsSubmitting(true);
-  
+
     try {
       // console.log("Submitting form with data:", formData);
-  
+
       // const response = await fetch("/api/login", {
       //   method: "POST",
       //   body: JSON.stringify(formData),
       //   headers: { "Content-Type": "application/json" },
       // });
 
-      const response = await fetch('/api/login', {
-        method: 'POST',
+      const response = await fetch("/api/login", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(formData),
-        credentials: 'include', // 👈 THIS is critical!
+        credentials: "include", // 👈 THIS is critical!
       });
-      
-  
+
       console.log("Response status:", response);
       const data = await response.json();
       console.log("Login response:", data);
-  
+
       if (!response.ok) {
         throw new Error(data.error || "Login failed");
       }
@@ -80,16 +85,17 @@ export default function LoginPage() {
       //   window.location.href = data.redirectUrl;
       // }
       console.log("Redirect:", data.redirectUrl);
-  
+
       router.push(data.redirectUrl || "/");
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An unexpected error occurred");
+      setError(
+        err instanceof Error ? err.message : "An unexpected error occurred"
+      );
     } finally {
       setIsSubmitting(false);
     }
   };
-  
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -103,10 +109,12 @@ export default function LoginPage() {
   }, [isSubmitting]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center text-black justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-extrabold">Sign in to your account</CardTitle>
+          <CardTitle className="text-2xl font-extrabold">
+            Sign in to your account
+          </CardTitle>
         </CardHeader>
 
         <CardContent>
@@ -114,7 +122,10 @@ export default function LoginPage() {
 
           <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Email address
               </label>
               <input
@@ -132,7 +143,10 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Password
               </label>
               <input
@@ -150,7 +164,12 @@ export default function LoginPage() {
             </div>
 
             <div className="mt-6">
-              <Button type="submit" className="w-full" disabled={isSubmitting} aria-busy={isSubmitting}>
+              <Button
+                type="submit"
+                className="w-full hover:bg-primary"
+                disabled={isSubmitting}
+                aria-busy={isSubmitting}
+              >
                 {isSubmitting ? (
                   <span className="flex items-center justify-center">
                     <span className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white mr-2"></span>
@@ -167,7 +186,10 @@ export default function LoginPage() {
         <CardFooter className="text-center">
           <p className="text-sm text-gray-600">
             Don't have an account?{" "}
-            <Link href="/register" className="font-medium text-[#1a1a1a] hover:text-blue-500">
+            <Link
+              href="/register"
+              className="font-medium text-[#1a1a1a] hover:text-blue-500"
+            >
               Register
             </Link>
           </p>
