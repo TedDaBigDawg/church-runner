@@ -61,6 +61,8 @@
     "next-themes": "^0.4.4",
     "path": "latest",
     "prisma": "latest",
+    "pusher": "^5.2.0",
+    "pusher-js": "^8.4.0",
     "react": "^19",
     "react-day-picker": "9.7.0",
     "react-dom": "^19",
@@ -75,7 +77,8 @@
     "util": "latest",
     "vaul": "^0.9.6",
     "ws": "latest",
-    "zod": "latest"
+    "zod": "latest",
+    "zustand": "^5.0.6"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",

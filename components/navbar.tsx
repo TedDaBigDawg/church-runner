@@ -16,6 +16,7 @@ import {
   Phone,
   LayoutDashboard,
   MessageCircle,
+  Tv,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useClickOutside } from "@/hooks/use-click-outside";
@@ -40,6 +41,7 @@ const navigationItems = {
     { name: "About", href: "/about", icon: Info },
     { name: "Services", href: "/services", icon: Calendar },
     { name: "Appointment", href: "/book-appointment", icon: MessageCircle },
+    { name: "Live Stream", href: "/live-stream", icon: Tv },
     { name: "Contact", href: "/contact", icon: Phone },
   ],
   authenticated: [
@@ -163,8 +165,8 @@ export default function Navbar({ user }: NavbarProps) {
 
   return (
     <nav className="bg-primary text-text-secondary sticky top-0 z-50">
-      <div className="max-w-7xl py-2 mx-auto px-2 sm:px-4 lg:px-8">
-        <div className="flex justify-between h-16">
+      <div className="max-w-7xl py-2 mx-auto px-2 sm:px-4 lg:px-0">
+        <div className="flex justify-between w-full h-16">
           <div className="flex w-full h-full items-center flex-grow">
             <Link href="/" className="flex-shrink-0 flex items-center">
               <Image
@@ -177,7 +179,7 @@ export default function Navbar({ user }: NavbarProps) {
           </div>
 
           {/* Desktop Navigation */}
-          <div className="hidden gap-3 md:flex md:items-center md:space-x-4">
+          <div className="hidden gap-3 md:flex md:items-center ">
             {navItems &&
               navItems.map((item) => {
                 const isActive =
@@ -190,8 +192,7 @@ export default function Navbar({ user }: NavbarProps) {
                     className={`flex items-center px-3 py-2 rounded-full text-sm font-medium transition-colors duration-200 ${
                       isActive ? "bg-primary  border-2 " : "hover:bg-primary/50"
                     }`}
-                    aria-current={isActive ? "page" : undefined}
-                  >
+                    aria-current={isActive ? "page" : undefined}>
                     <item.icon className="h-4 w-4 mr-1" />
                     {item.name}
                   </Link>
@@ -202,8 +203,7 @@ export default function Navbar({ user }: NavbarProps) {
               <Link className=" px-[20px]" href="/register">
                 <Button
                   variant="outline"
-                  className="text-white px-[40px] border-white hover:bg-blue-500 rounded-full transition-colors duration-200"
-                >
+                  className="text-white px-[40px] border-white hover:bg-blue-500 rounded-full transition-colors duration-200">
                   Register
                 </Button>
               </Link>
@@ -229,8 +229,7 @@ export default function Navbar({ user }: NavbarProps) {
                     id="user-menu"
                     aria-expanded={userMenuOpen}
                     aria-haspopup="true"
-                    onClick={() => setUserMenuOpen(!userMenuOpen)}
-                  >
+                    onClick={() => setUserMenuOpen(!userMenuOpen)}>
                     <span className="sr-only">Open user menu</span>
                     <div className="h-8 w-8 rounded-full bg-secondary flex items-center justify-center">
                       <User className="h-5 w-5" />
@@ -256,8 +255,7 @@ export default function Navbar({ user }: NavbarProps) {
                       className="origin-top-right absolute right-0 mt-2 w-64 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-10"
                       role="menu"
                       aria-orientation="vertical"
-                      aria-labelledby="user-menu"
-                    >
+                      aria-labelledby="user-menu">
                       <div className="px-4 py-2 text-xs text-gray-500 border-b">
                         <span className="font-medium">Signed in as</span>
                         <div className="font-medium truncate mt-0.5 text-gray-700">
@@ -269,8 +267,7 @@ export default function Navbar({ user }: NavbarProps) {
                         href={getProfilePath(user.role)}
                         className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-150"
                         role="menuitem"
-                        onClick={() => setUserMenuOpen(false)}
-                      >
+                        onClick={() => setUserMenuOpen(false)}>
                         Your Profile
                       </Link>
 
@@ -278,8 +275,7 @@ export default function Navbar({ user }: NavbarProps) {
                         href="/dashboard/activities"
                         className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-150"
                         role="menuitem"
-                        onClick={() => setUserMenuOpen(false)}
-                      >
+                        onClick={() => setUserMenuOpen(false)}>
                         Your Activities
                       </Link>
 
@@ -287,8 +283,7 @@ export default function Navbar({ user }: NavbarProps) {
                         type="button"
                         className="w-full text-left block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-150"
                         role="menuitem"
-                        onClick={handleLogout}
-                      >
+                        onClick={handleLogout}>
                         <div className="flex items-center">
                           <LogOut className="h-4 w-4 mr-2" />
                           Sign out
@@ -304,8 +299,7 @@ export default function Navbar({ user }: NavbarProps) {
                   <Button
                     variant="outline"
                     // size="sm"
-                    className="text-white px-[40px] rounded-full  border-white hover:bg-blue-500 transition-colors duration-200"
-                  >
+                    className="text-white px-[40px] rounded-full  border-white hover:bg-blue-500 transition-colors duration-200">
                     Sign in
                   </Button>
                 </Link>
@@ -319,8 +313,7 @@ export default function Navbar({ user }: NavbarProps) {
                 className="inline-flex items-center justify-center p-1.5 sm:p-2 rounded-md text-white hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white transition-colors duration-200"
                 aria-controls="mobile-menu"
                 aria-expanded={mobileMenuOpen}
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              >
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
                 <span className="sr-only">Open main menu</span>
                 {mobileMenuOpen ? (
                   <X className="block h-5 w-5 sm:h-6 sm:w-6" />
@@ -354,14 +347,12 @@ export default function Navbar({ user }: NavbarProps) {
               exit={{ x: "100%" }}
               transition={{ type: "tween", duration: 0.3 }}
               className="fixed top-0 right-0 bottom-0 w-64 bg-blue-700 md:hidden z-50 overflow-y-auto"
-              ref={mobileMenuRef}
-            >
+              ref={mobileMenuRef}>
               <div className="px-4 pt-5 pb-3 flex justify-between items-center border-b border-blue-600">
                 <span className="font-semibold text-lg">Menu</span>
                 <button
                   onClick={() => setMobileMenuOpen(false)}
-                  className="p-2 rounded-md text-white hover:bg-blue-600 transition-colors duration-200"
-                >
+                  className="p-2 rounded-md text-white hover:bg-blue-600 transition-colors duration-200">
                   <X className="h-5 w-5" />
                 </button>
               </div>
@@ -398,8 +389,7 @@ export default function Navbar({ user }: NavbarProps) {
                           isActive ? "bg-blue-800" : "hover:bg-blue-600"
                         }`}
                         aria-current={isActive ? "page" : undefined}
-                        onClick={() => setMobileMenuOpen(false)}
-                      >
+                        onClick={() => setMobileMenuOpen(false)}>
                         <item.icon className="h-5 w-5 mr-2" />
                         {item.name}
                       </Link>
@@ -411,15 +401,13 @@ export default function Navbar({ user }: NavbarProps) {
                     <Link
                       href="/login"
                       className="flex items-center px-3 py-2 rounded-md text-base font-medium hover:bg-blue-600 transition-colors duration-200"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
+                      onClick={() => setMobileMenuOpen(false)}>
                       Sign in
                     </Link>
                     <Link
                       href="/register"
                       className="flex items-center px-3 py-2 rounded-md text-base font-medium hover:bg-blue-600 transition-colors duration-200"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
+                      onClick={() => setMobileMenuOpen(false)}>
                       Register
                     </Link>
                   </>
@@ -428,8 +416,7 @@ export default function Navbar({ user }: NavbarProps) {
                     <Link
                       href={getProfilePath(user.role)}
                       className="flex items-center px-3 py-2 rounded-md text-base font-medium hover:bg-blue-600 transition-colors duration-200"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
+                      onClick={() => setMobileMenuOpen(false)}>
                       <User className="h-5 w-5 mr-2" />
                       Profile
                     </Link>
@@ -437,8 +424,7 @@ export default function Navbar({ user }: NavbarProps) {
                     <Link
                       href="/dashboard/activities"
                       className="flex items-center px-3 py-2 rounded-md text-base font-medium hover:bg-blue-600 transition-colors duration-200"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
+                      onClick={() => setMobileMenuOpen(false)}>
                       <Calendar className="h-5 w-5 mr-2" />
                       Your Activities
                     </Link>
@@ -449,8 +435,7 @@ export default function Navbar({ user }: NavbarProps) {
                       onClick={() => {
                         setMobileMenuOpen(false);
                         handleLogout();
-                      }}
-                    >
+                      }}>
                       <LogOut className="h-5 w-5 mr-2" />
                       Sign out
                     </button>
