@@ -1,40 +1,31 @@
-import LiveStream from "@/components/LiveStream";
-import Wishes from "@/components/Wishes";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Video } from "lucide-react";
-import { getWishes } from "../actions/wishes";
+import { requireAuth } from "@/lib/auth";
+import { getMassesWithLiveStream } from "@/actions/live-stream";
+import LiveStreamClient from "@/components/LiveStreamClient";
+import { Role } from "@prisma/client";
+
+interface Mass {
+  id: string;
+  title: string;
+  date: string;
+  location: string;
+  liveStreamUrl: string | null;
+  status: string;
+}
 
 export default async function LiveStreamPage() {
-  const initialWishes = await getWishes();
-  return (
-    <div className="grid md:grid-cols-2 gap-8">
-      {/* Livestream Section */}
-      <Card className="bg-white bg-opacity-90 shadow-xl rounded-lg overflow-hidden">
-        <CardHeader>
-          <CardTitle className="text-2xl font-bold text-purple-800">
-            Live Stream
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="aspect-w-16 aspect-h-9 bg-gray-200 rounded-lg overflow-hidden">
-            {/* <LiveStream streamUrl="https://youtube.com/live/MVu0Yc6OlaU?feature=share" /> */}
-            <LiveStream streamUrl="https://www.youtube.com/live/XPgqmODkKZA?si=eXxS36WV_NYuxjSR" />
-            <div className="flex items-center justify-center h-full">
-              <Video className="w-16 h-16 text-gray-400" />
-              <p className="ml-4 text-gray-600">
-                Livestream will begin shortly
-              </p>
-            </div>
-          </div>
-          <p className="mt-4 text-gray-600">
-            The memorial service will begin at 2:00 PM EST. If you're having
-            trouble with the stream, please refresh the page.
-          </p>
-        </CardContent>
-      </Card>
+  const user = await requireAuth();
+  const masses = await getMassesWithLiveStream();
 
-      {/* Share a Memory Section */}
-      <Wishes initialWishes={initialWishes} />
-    </div>
+  // Convert dates to strings for serialization
+  const serializedMasses = masses.map((mass) => ({
+    ...mass,
+    date: mass.date.toISOString(),
+  }));
+
+  return (
+    <LiveStreamClient
+      user={user as { role: Role }}
+      initialMasses={serializedMasses}
+    />
   );
 }

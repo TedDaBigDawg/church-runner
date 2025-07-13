@@ -38,6 +38,7 @@ model Mass {
   updatedAt                   DateTime        @updatedAt
   massIntentions              MassIntention[]
   thanksgivings               Thanksgiving[]
+  liveStreamUrl               String?
 
   @@index([date])
   @@index([status])

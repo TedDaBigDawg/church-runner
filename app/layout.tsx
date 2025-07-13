@@ -1,11 +1,13 @@
-import type React from "react"
-import type { Metadata, Viewport } from "next"
-import { Inter } from 'next/font/google'
-import Navbar from "@/components/navbar"
-import { Footer } from "@/components/footer"
-import { SystemNotification } from "@/components/system-notification"
-import { getSession } from "@/lib/auth"
-import "@/app/globals.css"
+import type React from "react";
+import type { Metadata, Viewport } from "next";
+import { Inter } from "next/font/google";
+import Navbar from "@/components/navbar";
+import { Footer } from "@/components/footer";
+import { SystemNotification } from "@/components/system-notification";
+import { getSession } from "@/lib/auth";
+import NextTopLoader from "nextjs-toploader";
+import { Toaster } from "sonner";
+import "@/app/globals.css";
 
 // Optimize font loading
 const inter = Inter({
@@ -13,7 +15,7 @@ const inter = Inter({
   display: "swap",
   preload: true,
   variable: "--font-inter",
-})
+});
 
 export const metadata: Metadata = {
   title: "Church Management System",
@@ -23,18 +25,22 @@ export const metadata: Metadata = {
     icon: "/favicon.ico",
     apple: "/apple-icon.png",
   },
-    generator: 'v0.dev'
-}
+  generator: "v0.dev",
+};
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
   themeColor: "#3b82f6", // Blue-600
-}
+};
 
-export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const session = await getSession()
+export default async function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const session = await getSession();
   const user = session
     ? {
         id: session.id || "",
@@ -42,14 +48,18 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         email: session.email || "",
         role: session.role || "",
       }
-    : null
+    : null;
 
   return (
     <html lang="en" className={inter.variable}>
       <head>
         {/* Preload critical assets */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossOrigin="anonymous"
+        />
 
         {/* Add preload hints for critical CSS */}
         <link rel="preload" href="/globals.css" as="style" />
@@ -61,16 +71,16 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <Navbar user={user} />
         <main className="flex-grow">
           <div className="">
+            <NextTopLoader color="white" showSpinner={false} />
             <SystemNotification />
             {children}
           </div>
+          <Toaster richColors />
         </main>
         <Footer />
       </body>
     </html>
-  )
+  );
 }
 
-
-
-import './globals.css'
+import "./globals.css";
