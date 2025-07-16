@@ -169,7 +169,7 @@ export default function Navbar({ user }: NavbarProps) {
                 </Link>
               );
             })}
-            {!user && (
+            {/* {!user && (
               <div className="flex items-center space-x-2">
                 <Link href="/login">
                   <Button
@@ -188,7 +188,7 @@ export default function Navbar({ user }: NavbarProps) {
                   </Button>
                 </Link>
               </div>
-            )}
+            )} */}
           </div>
 
           {/* Right Side (User Menu, Notifications, Mobile Menu Button) */}
