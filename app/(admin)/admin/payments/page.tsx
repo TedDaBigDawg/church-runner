@@ -4,42 +4,63 @@ import { Button } from "@/components/ui/button";
 import { requireAdmin } from "@/lib/auth";
 import { formatDate, formatCurrency } from "@/lib/utils";
 import { getAllPayments } from "@/actions/payment-actions";
+import { PaginationComponent } from "@/components/layout/pagination";
 
-export default async function AdminDonationsPage() {
+const PAGE_SIZE = 5;
+
+type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
+
+export default async function AdminDonationsPage(props: {
+  searchParams: SearchParams;
+}) {
   await requireAdmin();
 
-  // Fetch all payments
+  const searchParams = await props.searchParams;
+
+  const donationsPage = Math.max(
+    parseInt((searchParams["donations"] as string) ?? "1", 10),
+    1
+  );
+  const offeringsPage = Math.max(
+    parseInt((searchParams["offerings"] as string) ?? "1", 10),
+    1
+  );
+
   const payments = await getAllPayments();
 
-  // Separate donations and offerings
-  const donations = payments.filter((payment) => payment.type === "DONATION");
-  const offerings = payments.filter((payment) => payment.type === "OFFERING");
+  const donations = payments.filter((p) => p.type === "DONATION");
+  const offerings = payments.filter((p) => p.type === "OFFERING");
 
-  // Calculate totals for paid payments
-  const totalDonations = donations.reduce((sum, payment) => {
-    return payment.status === "PAID" ? sum + payment.amount : sum;
-  }, 0);
+  const totalDonations = donations.reduce(
+    (sum, p) => (p.status === "PAID" ? sum + p.amount : sum),
+    0
+  );
+  const totalOfferings = offerings.reduce(
+    (sum, p) => (p.status === "PAID" ? sum + p.amount : sum),
+    0
+  );
 
-  const totalOfferings = offerings.reduce((sum, payment) => {
-    return payment.status === "PAID" ? sum + payment.amount : sum;
-  }, 0);
-
-  // Calculate total by category for donations
-  const totalByCategory = donations.reduce((acc, payment) => {
-    if (payment.status === "PAID" && payment.category) {
-      const category = payment.category;
-      if (!acc[category]) {
-        acc[category] = 0;
-      }
-      acc[category] += payment.amount;
+  const totalByCategory = donations.reduce((acc, p) => {
+    if (p.status === "PAID" && p.category) {
+      acc[p.category] = (acc[p.category] || 0) + p.amount;
     }
     return acc;
   }, {} as Record<string, number>);
 
+  // Paginate donations
+  const donationsStart = (donationsPage - 1) * PAGE_SIZE;
+  const donationsEnd = donationsStart + PAGE_SIZE;
+  const paginatedDonations = donations.slice(donationsStart, donationsEnd);
+
+  // Paginate offerings
+  const offeringsStart = (offeringsPage - 1) * PAGE_SIZE;
+  const offeringsEnd = offeringsStart + PAGE_SIZE;
+  const paginatedOfferings = offerings.slice(offeringsStart, offeringsEnd);
+
   return (
     <div className="bg-gray-50 text-black min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex flex-col md:flex-row md:justify-between gap-3  md:items-center mb-8">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">
               Manage Donations
@@ -48,63 +69,34 @@ export default async function AdminDonationsPage() {
               View and manage all donations and offerings.
             </p>
           </div>
-          <Link href="/admin/payments/new">
-            <Button>Create Fundraising Goal</Button>
-          </Link>
+          <div className="">
+            <Link href="/admin/payments/new">
+              <Button className=" hover:bg-primary">
+                Create Fundraising Goal
+              </Button>
+            </Link>
+          </div>
         </div>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-500">
-                Total Donations
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-semibold">
-                {formatCurrency(totalDonations)}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-500">
-                Total Offerings
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-semibold">
-                {formatCurrency(totalOfferings)}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-500">
-                Pending Payments
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-semibold">
-                {payments.filter((p) => p.status === "UNPAID").length}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-500">
-                Total Contributions
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-semibold">
-                {formatCurrency(totalDonations + totalOfferings)}
-              </div>
-            </CardContent>
-          </Card>
+          <SummaryCard
+            title="Total Donations"
+            value={formatCurrency(totalDonations)}
+          />
+          <SummaryCard
+            title="Total Offerings"
+            value={formatCurrency(totalOfferings)}
+          />
+          <SummaryCard
+            title="Pending Payments"
+            value={payments
+              .filter((p) => p.status === "UNPAID")
+              .length.toString()}
+          />
+          <SummaryCard
+            title="Total Contributions"
+            value={formatCurrency(totalDonations + totalOfferings)}
+          />
         </div>
 
         <div className="grid gap-8 md:grid-cols-2 mb-8">
@@ -126,12 +118,6 @@ export default async function AdminDonationsPage() {
                       <span className="font-bold">{formatCurrency(total)}</span>
                     </div>
                   ))}
-                  <div className="pt-4 border-t border-gray-200 flex justify-between items-center">
-                    <span className="font-medium">Total Donations</span>
-                    <span className="font-bold">
-                      {formatCurrency(totalDonations)}
-                    </span>
-                  </div>
                 </div>
               ) : (
                 <p className="text-gray-500">No donation data available.</p>
@@ -151,12 +137,8 @@ export default async function AdminDonationsPage() {
                       <div className="flex justify-between">
                         <div>
                           <p className="font-medium">
-                            {payment.type === "DONATION"
-                              ? `Donation (${payment.category?.replace(
-                                  "_",
-                                  " "
-                                )})`
-                              : "Offering"}
+                            {payment.type}{" "}
+                            {payment.category && `(${payment.category})`}
                           </p>
                           <p className="text-sm text-gray-500">
                             By {payment.user.name}
@@ -169,17 +151,6 @@ export default async function AdminDonationsPage() {
                           <p className="text-sm text-gray-500">
                             {formatDate(payment.createdAt)}
                           </p>
-                          <span
-                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                              payment.status === "PAID"
-                                ? "bg-green-100 text-green-800"
-                                : payment.status === "FAILED"
-                                ? "bg-red-100 text-red-800"
-                                : "bg-yellow-100 text-yellow-800"
-                            }`}
-                          >
-                            {payment.status}
-                          </span>
                         </div>
                       </div>
                     </li>
@@ -192,189 +163,185 @@ export default async function AdminDonationsPage() {
           </Card>
         </div>
 
-        <div className="grid gap-8 md:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>All Donations</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th
-                        scope="col"
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                      >
-                        Date
-                      </th>
-                      <th
-                        scope="col"
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                      >
-                        User
-                      </th>
-                      <th
-                        scope="col"
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                      >
-                        Category
-                      </th>
-                      <th
-                        scope="col"
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                      >
-                        Amount
-                      </th>
-                      <th
-                        scope="col"
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                      >
-                        Status
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {donations.map((payment) => (
-                      <tr key={payment.id}>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-500">
-                            {formatDate(payment.createdAt)}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900">
-                            {payment.user.name}
-                          </div>
-                          <div className="text-sm text-gray-500">
-                            {payment.user.email}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">
-                            {payment.category?.replace("_", " ") || "-"}
-                          </div>
-                          {payment.goal && (
-                            <div className="text-xs text-gray-500">
-                              For: {payment.goal.title}
-                            </div>
-                          )}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900">
-                            {formatCurrency(payment.amount)}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span
-                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                              payment.status === "PAID"
-                                ? "bg-green-100 text-green-800"
-                                : payment.status === "FAILED"
-                                ? "bg-red-100 text-red-800"
-                                : "bg-yellow-100 text-yellow-800"
-                            }`}
-                          >
-                            {payment.status}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </CardContent>
-          </Card>
+        {/* Donations Table */}
+        <PaginatedTable
+          title="All Donations"
+          rows={paginatedDonations}
+          columns={[
+            {
+              key: "date",
+              label: "Date",
+              render: (p) => formatDate(p.createdAt),
+            },
+            {
+              key: "user",
+              label: "User",
+              render: (p) => (
+                <>
+                  <div>{p.user.name}</div>
+                  <div className="text-xs text-gray-500">{p.user.email}</div>
+                </>
+              ),
+            },
+            {
+              key: "category",
+              label: "Category",
+              render: (p) => p.category?.replace("_", " ") || "-",
+            },
+            {
+              key: "amount",
+              label: "Amount",
+              render: (p) => formatCurrency(p.amount),
+            },
+            {
+              key: "status",
+              label: "Status",
+              render: (p) => <StatusBadge status={p.status} />,
+            },
+          ]}
+          footer={
+            <PaginationComponent
+              limit={PAGE_SIZE}
+              totalItems={donations.length}
+              siblingCount={1}
+              pageParam="donations"
+            />
+          }
+        />
 
-          <Card>
-            <CardHeader>
-              <CardTitle>All Offerings</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th
-                        scope="col"
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                      >
-                        Date
-                      </th>
-                      <th
-                        scope="col"
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                      >
-                        User
-                      </th>
-                      <th
-                        scope="col"
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                      >
-                        Description
-                      </th>
-                      <th
-                        scope="col"
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                      >
-                        Amount
-                      </th>
-                      <th
-                        scope="col"
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                      >
-                        Status
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {offerings.map((payment) => (
-                      <tr key={payment.id}>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-500">
-                            {formatDate(payment.createdAt)}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900">
-                            {payment.user.name}
-                          </div>
-                          <div className="text-sm text-gray-500">
-                            {payment.user.email}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="text-sm text-gray-500">
-                            {payment.description || "-"}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900">
-                            {formatCurrency(payment.amount)}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span
-                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                              payment.status === "PAID"
-                                ? "bg-green-100 text-green-800"
-                                : payment.status === "FAILED"
-                                ? "bg-red-100 text-red-800"
-                                : "bg-yellow-100 text-yellow-800"
-                            }`}
-                          >
-                            {payment.status}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        {/* Offerings Table */}
+        <PaginatedTable
+          title="All Offerings"
+          rows={paginatedOfferings}
+          columns={[
+            {
+              key: "date",
+              label: "Date",
+              render: (p) => formatDate(p.createdAt),
+            },
+            {
+              key: "user",
+              label: "User",
+              render: (p) => (
+                <>
+                  <div>{p.user.name}</div>
+                  <div className="text-xs text-gray-500">{p.user.email}</div>
+                </>
+              ),
+            },
+            {
+              key: "description",
+              label: "Description",
+              render: (p) => p.description || "-",
+            },
+            {
+              key: "amount",
+              label: "Amount",
+              render: (p) => formatCurrency(p.amount),
+            },
+            {
+              key: "status",
+              label: "Status",
+              render: (p) => <StatusBadge status={p.status} />,
+            },
+          ]}
+          footer={
+            <PaginationComponent
+              limit={PAGE_SIZE}
+              totalItems={offerings.length}
+              siblingCount={1}
+              pageParam="offerings"
+            />
+          }
+        />
       </div>
     </div>
+  );
+}
+
+function SummaryCard({ title, value }: { title: string; value: string }) {
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm font-medium text-gray-500">
+          {title}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="text-2xl font-semibold">{value}</div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function PaginatedTable({
+  title,
+  rows,
+  columns,
+  footer,
+}: {
+  title: string;
+  rows: any[];
+  columns: {
+    key: string;
+    label: string;
+    render: (row: any) => React.ReactNode;
+  }[];
+  footer?: React.ReactNode;
+}) {
+  return (
+    <div className="mt-8">
+      <Card>
+        <CardHeader>
+          <CardTitle>{title}</CardTitle>
+        </CardHeader>
+        <CardContent className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                {columns.map((col) => (
+                  <th
+                    key={col.key}
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    {col.label}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {rows.map((row) => (
+                <tr key={row.id}>
+                  {columns.map((col) => (
+                    <td key={col.key} className="px-6 py-4 whitespace-nowrap">
+                      {col.render(row)}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </CardContent>
+        <div className="flex justify-center mt-4">{footer}</div>
+      </Card>
+    </div>
+  );
+}
+
+function StatusBadge({ status }: { status: string }) {
+  const color =
+    status === "PAID"
+      ? "bg-green-100 text-green-800"
+      : status === "FAILED"
+      ? "bg-red-100 text-red-800"
+      : "bg-yellow-100 text-yellow-800";
+
+  return (
+    <span
+      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${color}`}
+    >
+      {status}
+    </span>
   );
 }
