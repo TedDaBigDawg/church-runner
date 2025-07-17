@@ -24,9 +24,12 @@ import {
   Heart,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { getAllParishioners } from "@/actions/parishioners";
 
 export default async function AdminDashboardPage() {
   const user = await requireAdmin();
+
+  const parishioner = await getAllParishioners();
 
   // Fetch counts for various entities
   const pendingMassIntentions = await prisma.massIntention.count({
@@ -116,6 +119,12 @@ export default async function AdminDashboardPage() {
 
         {/* Stats Overview Cards */}
         <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 mb-6 md:mb-8">
+          <StatsCard
+            title="Parishioners"
+            value={parishioner.totalCount?.toString() || "0"}
+            href="/admin/parishioners"
+            icon={<FileText className="h-5 w-5 text-[#1a1a1a]" />}
+          />
           <StatsCard
             title="Pending Mass Intentions"
             value={pendingMassIntentions}

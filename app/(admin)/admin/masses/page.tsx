@@ -5,11 +5,17 @@ import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { formatDate, formatTime } from "@/lib/utils";
 import { deleteMass } from "@/actions/mass-actions";
+import { PaginationComponent } from "@/components/layout/pagination";
 
-export default async function AdminMassesPage() {
+const PAGE_SIZE = 5;
+
+export default async function AdminMassesPage({
+  searchParams,
+}: {
+  searchParams: { [key: string]: string | string[] | undefined };
+}) {
   await requireAdmin();
 
-  // Fetch all masses
   const masses = await prisma.mass.findMany({
     orderBy: { date: "asc" },
     include: {
@@ -22,10 +28,18 @@ export default async function AdminMassesPage() {
     },
   });
 
-  // Group masses by upcoming and past
   const now = new Date();
   const upcomingMasses = masses.filter((mass) => mass.date >= now);
   const pastMasses = masses.filter((mass) => mass.date < now);
+
+  const pastMassesPage = Math.max(
+    parseInt((searchParams?.["past"] as string) ?? "1", 10),
+    1
+  );
+
+  const pastStart = (pastMassesPage - 1) * PAGE_SIZE;
+  const pastEnd = pastStart + PAGE_SIZE;
+  const paginatedPastMasses = pastMasses.slice(pastStart, pastEnd);
 
   return (
     <div className="bg-gray-50 text-black min-h-screen">
@@ -42,6 +56,7 @@ export default async function AdminMassesPage() {
           </Link>
         </div>
 
+        {/* UPCOMING MASSES */}
         <div className="mb-12">
           <h2 className="text-xl font-bold text-gray-900 mb-6">
             Upcoming Masses
@@ -61,8 +76,8 @@ export default async function AdminMassesPage() {
                           </Button>
                         </Link>
                         <form
-                          onSubmit={async (e) => {
-                            e.preventDefault();
+                          action={async () => {
+                            "use server";
                             await deleteMass(mass.id);
                           }}
                         >
@@ -80,82 +95,8 @@ export default async function AdminMassesPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="grid md:grid-cols-2 gap-6">
-                      <div>
-                        <div className="space-y-2 text-sm">
-                          <div className="flex justify-between">
-                            <span className="font-medium">Date:</span>
-                            <span>{formatDate(mass.date)}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="font-medium">Time:</span>
-                            <span>{formatTime(mass.date)}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="font-medium">Location:</span>
-                            <span>{mass.location}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="font-medium">Status:</span>
-                            <span
-                              className={`${
-                                mass.status === "AVAILABLE"
-                                  ? "text-green-600"
-                                  : "text-red-600"
-                              }`}
-                            >
-                              {mass.status}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div>
-                        <h3 className="text-lg font-medium text-gray-900 mb-4">
-                          Slot Availability
-                        </h3>
-                        <div className="space-y-4">
-                          <div className="flex justify-between items-center">
-                            <span>Mass Intentions:</span>
-                            <div className="flex items-center">
-                              <span className="font-medium mr-2">
-                                {mass._count.massIntentions} booked /{" "}
-                                {mass._count.massIntentions +
-                                  mass.availableIntentionsSlots}{" "}
-                                total
-                              </span>
-                              <span
-                                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                  mass.availableIntentionsSlots > 0
-                                    ? "bg-green-100 text-green-800"
-                                    : "bg-red-100 text-red-800"
-                                }`}
-                              >
-                                {mass.availableIntentionsSlots} available
-                              </span>
-                            </div>
-                          </div>
-                          <div className="flex justify-between items-center">
-                            <span>Thanksgiving:</span>
-                            <div className="flex items-center">
-                              <span className="font-medium mr-2">
-                                {mass._count.thanksgivings} booked /{" "}
-                                {mass._count.thanksgivings +
-                                  mass.availableThanksgivingsSlots}{" "}
-                                total
-                              </span>
-                              <span
-                                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                  mass.availableThanksgivingsSlots > 0
-                                    ? "bg-green-100 text-green-800"
-                                    : "bg-red-100 text-red-800"
-                                }`}
-                              >
-                                {mass.availableThanksgivingsSlots} available
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
+                      <MassDetails mass={mass} />
+                      <SlotAvailability mass={mass} />
                     </div>
                   </CardContent>
                 </Card>
@@ -173,86 +114,71 @@ export default async function AdminMassesPage() {
           )}
         </div>
 
+        {/* PAST MASSES TABLE */}
         <div>
           <h2 className="text-xl font-bold text-gray-900 mb-6">Past Masses</h2>
 
           {pastMasses.length > 0 ? (
-            <Card>
-              <CardContent className="p-0">
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th
-                          scope="col"
-                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                        >
-                          Mass
-                        </th>
-                        <th
-                          scope="col"
-                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                        >
-                          Date & Time
-                        </th>
-                        <th
-                          scope="col"
-                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                        >
-                          Location
-                        </th>
-                        <th
-                          scope="col"
-                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                        >
-                          Intentions
-                        </th>
-                        <th
-                          scope="col"
-                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                        >
-                          Thanksgivings
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {pastMasses.map((mass) => (
-                        <tr key={mass.id}>
-                          <td className="px-6 py-4">
-                            <div className="text-sm font-medium text-gray-900">
-                              {mass.title}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-500">
-                              {formatDate(mass.date)}
-                            </div>
-                            <div className="text-sm text-gray-500">
-                              {formatTime(mass.date)}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-500">
-                              {mass.location}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-500">
-                              {mass._count.massIntentions} booked
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-500">
-                              {mass._count.thanksgivings} booked
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </CardContent>
-            </Card>
+            <PaginatedTable
+              title=""
+              rows={paginatedPastMasses}
+              columns={[
+                {
+                  key: "mass",
+                  label: "Mass",
+                  render: (m) => (
+                    <div className="text-sm font-medium">{m.title}</div>
+                  ),
+                },
+                {
+                  key: "datetime",
+                  label: "Date & Time",
+                  render: (m) => (
+                    <>
+                      <div className="text-sm text-gray-500">
+                        {formatDate(m.date)}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        {formatTime(m.date)}
+                      </div>
+                    </>
+                  ),
+                },
+                {
+                  key: "location",
+                  label: "Location",
+                  render: (m) => (
+                    <div className="text-sm text-gray-500">{m.location}</div>
+                  ),
+                },
+                {
+                  key: "intentions",
+                  label: "Intentions",
+                  render: (m) => (
+                    <div className="text-sm text-gray-500">
+                      {m._count.massIntentions} booked
+                    </div>
+                  ),
+                },
+                {
+                  key: "thanksgivings",
+                  label: "Thanksgivings",
+                  render: (m) => (
+                    <div className="text-sm text-gray-500">
+                      {m._count.thanksgivings} booked
+                    </div>
+                  ),
+                },
+              ]}
+              footer={
+                <PaginationComponent
+                  limit={PAGE_SIZE}
+                  totalItems={pastMasses.length}
+                  siblingCount={1}
+                  pageParam="past"
+                />
+              }
+            />
           ) : (
             <Card>
               <CardContent className="text-center py-8">
@@ -263,5 +189,139 @@ export default async function AdminMassesPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+function MassDetails({ mass }: { mass: any }) {
+  return (
+    <div className="space-y-2 text-sm">
+      <div className="flex justify-between">
+        <span className="font-medium">Date:</span>
+        <span>{formatDate(mass.date)}</span>
+      </div>
+      <div className="flex justify-between">
+        <span className="font-medium">Time:</span>
+        <span>{formatTime(mass.date)}</span>
+      </div>
+      <div className="flex justify-between">
+        <span className="font-medium">Location:</span>
+        <span>{mass.location}</span>
+      </div>
+      <div className="flex justify-between">
+        <span className="font-medium">Status:</span>
+        <span
+          className={
+            mass.status === "AVAILABLE" ? "text-green-600" : "text-red-600"
+          }
+        >
+          {mass.status}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function SlotAvailability({ mass }: { mass: any }) {
+  return (
+    <div>
+      <h3 className="text-lg font-medium text-gray-900 mb-4">
+        Slot Availability
+      </h3>
+      <div className="space-y-4">
+        <SlotRow
+          label="Mass Intentions"
+          booked={mass._count.massIntentions}
+          available={mass.availableIntentionsSlots}
+        />
+        <SlotRow
+          label="Thanksgiving"
+          booked={mass._count.thanksgivings}
+          available={mass.availableThanksgivingsSlots}
+        />
+      </div>
+    </div>
+  );
+}
+
+function SlotRow({
+  label,
+  booked,
+  available,
+}: {
+  label: string;
+  booked: number;
+  available: number;
+}) {
+  const total = booked + available;
+  return (
+    <div className="flex justify-between items-center">
+      <span>{label}:</span>
+      <div className="flex items-center">
+        <span className="font-medium mr-2">
+          {booked} booked / {total} total
+        </span>
+        <span
+          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+            available > 0
+              ? "bg-green-100 text-green-800"
+              : "bg-red-100 text-red-800"
+          }`}
+        >
+          {available} available
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function PaginatedTable({
+  title,
+  rows,
+  columns,
+  footer,
+}: {
+  title: string;
+  rows: any[];
+  columns: {
+    key: string;
+    label: string;
+    render: (row: any) => React.ReactNode;
+  }[];
+  footer?: React.ReactNode;
+}) {
+  return (
+    <Card>
+      <CardHeader>{title && <CardTitle>{title}</CardTitle>}</CardHeader>
+      <CardContent className="p-0">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                {columns.map((col) => (
+                  <th
+                    key={col.key}
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    {col.label}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {rows.map((row) => (
+                <tr key={row.id}>
+                  {columns.map((col) => (
+                    <td key={col.key} className="px-6 py-4 whitespace-nowrap">
+                      {col.render(row)}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {footer && <div className="flex justify-center my-4">{footer}</div>}
+        </div>
+      </CardContent>
+    </Card>
   );
 }

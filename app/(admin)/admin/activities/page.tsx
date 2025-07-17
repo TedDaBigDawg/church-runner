@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useSearchParams, useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { formatDate } from "@/lib/utils";
@@ -15,6 +16,7 @@ import {
   AlertTriangle,
   User,
 } from "lucide-react";
+import { PaginationComponent } from "@/components/layout/pagination";
 
 interface Activity {
   id: string;
@@ -30,13 +32,23 @@ interface Activity {
   };
 }
 
+const PAGE_SIZE = 5;
+
 export default function AdminActivitiesPage() {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  const page = Math.max(parseInt(searchParams.get("page") ?? "1", 10), 1);
+  const start = (page - 1) * PAGE_SIZE;
+  const end = start + PAGE_SIZE;
+
   useEffect(() => {
     async function fetchActivities() {
+      setLoading(true);
       try {
         const data = await getAdminActivities();
         setActivities(data);
@@ -51,7 +63,8 @@ export default function AdminActivitiesPage() {
     fetchActivities();
   }, []);
 
-  // Function to get icon based on entity type
+  const paginatedActivities = activities.slice(start, end);
+
   const getActivityIcon = (activity: Activity) => {
     switch (activity.entityType) {
       case "Payment":
@@ -69,7 +82,6 @@ export default function AdminActivitiesPage() {
     }
   };
 
-  // Function to get action link based on entity type
   const getActionLink = (activity: Activity) => {
     if (!activity.entityId) return null;
 
@@ -103,7 +115,6 @@ export default function AdminActivitiesPage() {
     }
   };
 
-  // Function to check if activity requires action
   const requiresAction = (activity: Activity) => {
     return (
       activity.action.includes("New") ||
@@ -145,46 +156,57 @@ export default function AdminActivitiesPage() {
               </div>
             )}
 
-            {activities.length > 0 ? (
-              <ul className="divide-y divide-gray-200">
-                {activities.map((activity) => (
-                  <li
-                    key={activity.id}
-                    className={`py-4 ${
-                      requiresAction(activity) ? "bg-yellow-50" : ""
-                    }`}
-                  >
-                    <div className="flex items-start">
-                      <div className="flex-shrink-0 mt-1">
-                        {getActivityIcon(activity)}
-                      </div>
-                      <div className="ml-3 flex-1">
-                        <div className="flex items-center justify-between">
-                          <p
-                            className={`text-sm font-medium ${
-                              requiresAction(activity)
-                                ? "text-yellow-900"
-                                : "text-gray-900"
-                            }`}
-                          >
-                            {activity.action}
-                          </p>
-                          <p className="text-sm text-gray-500">
-                            {formatDate(activity.createdAt)}
-                          </p>
+            {paginatedActivities.length > 0 ? (
+              <>
+                <ul className="divide-y divide-gray-200">
+                  {paginatedActivities.map((activity) => (
+                    <li
+                      key={activity.id}
+                      className={`py-4 ${
+                        requiresAction(activity) ? "bg-yellow-50" : ""
+                      }`}
+                    >
+                      <div className="flex items-start">
+                        <div className="flex-shrink-0 mt-1">
+                          {getActivityIcon(activity)}
                         </div>
-                        {requiresAction(activity) && (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 mt-1">
-                            <AlertTriangle className="h-3 w-3 mr-1" />
-                            Action Required
-                          </span>
-                        )}
-                        <div className="mt-2">{getActionLink(activity)}</div>
+                        <div className="ml-3 flex-1">
+                          <div className="flex items-center justify-between">
+                            <p
+                              className={`text-sm font-medium ${
+                                requiresAction(activity)
+                                  ? "text-yellow-900"
+                                  : "text-gray-900"
+                              }`}
+                            >
+                              {activity.action}
+                            </p>
+                            <p className="text-sm text-gray-500">
+                              {formatDate(activity.createdAt)}
+                            </p>
+                          </div>
+                          {requiresAction(activity) && (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 mt-1">
+                              <AlertTriangle className="h-3 w-3 mr-1" />
+                              Action Required
+                            </span>
+                          )}
+                          <div className="mt-2">{getActionLink(activity)}</div>
+                        </div>
                       </div>
-                    </div>
-                  </li>
-                ))}
-              </ul>
+                    </li>
+                  ))}
+                </ul>
+
+                <div className="flex justify-center mt-6">
+                  <PaginationComponent
+                    limit={PAGE_SIZE}
+                    totalItems={activities.length}
+                    siblingCount={1}
+                    pageParam="page"
+                  />
+                </div>
+              </>
             ) : (
               <div className="text-center py-8">
                 <Bell className="mx-auto h-12 w-12 text-gray-400" />
