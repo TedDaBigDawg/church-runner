@@ -16,6 +16,7 @@ model User {
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
   phone          String?
+  isBlocked      Boolean         @default(false)
   activities     ActivityLog[]
   eventRsvps     EventRsvp[]
   massIntentions MassIntention[]
