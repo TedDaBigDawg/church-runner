@@ -37,9 +37,9 @@ model Mass {
   status                      MassStatus      @default(AVAILABLE)
   createdAt                   DateTime        @default(now())
   updatedAt                   DateTime        @updatedAt
+  liveStreamUrl               String?
   massIntentions              MassIntention[]
   thanksgivings               Thanksgiving[]
-  liveStreamUrl               String?
 
   @@index([date])
   @@index([status])

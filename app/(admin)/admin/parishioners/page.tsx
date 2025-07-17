@@ -1,4 +1,8 @@
-import { getAllParishioners } from "@/actions/parishioners";
+import {
+  blockParishionerByID,
+  getAllParishioners,
+} from "@/actions/parishioners";
+import BlockButton from "@/components/blockButton";
 import { PaginationComponent } from "@/components/layout/pagination";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -107,13 +111,10 @@ export default async function Parishioners(props: {
                               </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium flex space-x-2">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="text-red-600 hover:text-red-800"
-                              >
-                                Delete
-                              </Button>
+                              <BlockButton
+                                id={info.id}
+                                isBlocked={info.isBlocked}
+                              />
                             </td>
                           </tr>
                         ))}

@@ -22,6 +22,8 @@ import {
   Target,
   FileText,
   Heart,
+  User,
+  Book,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { getAllParishioners } from "@/actions/parishioners";
@@ -123,7 +125,7 @@ export default async function AdminDashboardPage() {
             title="Parishioners"
             value={parishioner.totalCount?.toString() || "0"}
             href="/admin/parishioners"
-            icon={<FileText className="h-5 w-5 text-[#1a1a1a]" />}
+            icon={<User className="h-5 w-5 text-[#1a1a1a]" />}
           />
           <StatsCard
             title="Pending Mass Intentions"
@@ -158,6 +160,14 @@ export default async function AdminDashboardPage() {
             value={formatCompactNumber(totalPayments._sum.amount || 0)}
             href="/admin/payments"
             icon={<DollarSign className="h-5 w-5 text-emerald-600" />}
+            tooltip={formatCurrency(totalPayments._sum.amount || 0)}
+          />
+
+          <StatsCard
+            title="View Appointments"
+            value={formatCompactNumber(totalPayments._sum.amount || 0)}
+            href="/admin/payments"
+            icon={<Book className="h-5 w-5 text-emerald-600" />}
             tooltip={formatCurrency(totalPayments._sum.amount || 0)}
           />
         </div>
