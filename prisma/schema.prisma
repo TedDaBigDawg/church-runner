@@ -29,15 +29,16 @@ model User {
 }
 
 model Appointment {
-  id            String   @id @default(uuid())
-  firstName     String
-  lastName      String
-  email         String
-  phone         String
-  preferredDate DateTime
-  preferredTime String // or Enum if you want controlled time slots
-  notes         String?
-  status        Status   @default(PENDING)
+  id        String   @id @default(uuid())
+  firstName String
+  lastName  String
+  email     String
+  phone     String
+  date      DateTime
+  timeSlot  String // e.g. "09:00", "10:00", etc.
+  notes     String?
+  status    Status   @default(PENDING)
+  reason    String?
 
   userId String
   user   User   @relation(fields: [userId], references: [id])
@@ -46,7 +47,7 @@ model Appointment {
   updatedAt DateTime @updatedAt
 
   @@index([userId])
-  @@index([preferredDate])
+  @@index([date])
 }
 
 model Mass {
